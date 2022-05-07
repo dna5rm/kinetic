@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{# load static #}
+{% load tz %}
+{% block title %}fping: {{ agent }} - {{ address }}{% endblock %}
+{% block content %}
+{% get_current_timezone as TIME_ZONE %}
+<div class="d-flex align-items-center justify-content-center">
+  <div class="content-center shadow-lg p-3 mb-5 bg-body rounded" style="width: 730px;">
+    <h1>
+      <span class="badge bg-primary">
+        <a href="../{{ agent }}" class="link-light text-decoration-none">
+          {{ agent }}
+        </a>
+      </span>
+      <a href="../?query={{ hostname }}" class="link-dark text-decoration-none">
+        {{ hostname }}
+      </a>
+    </h1><br />
+
+    <div class="col">
+      <img src="{{ graph }}" alt="{{ address }} graph" />
+    </div><br />
+
+    {% if multi %}
+    <div class="col">
+      <a href="../?query={{ hostname }}" class="link-light text-decoration-none">
+        <img src="{{ multi }}" alt="{{ hostname }} multi graph" />
+      </a>
+    </div><br />
+    {% endif %}
+
+    <div class="col" style="width: 695px;">
+      <form action="#" method="GET">
+        <div class="input-group">
+          <span class="input-group-text">{{ TIME_ZONE }}</span>
+          <input type="datetime-local" class="form-control" name="start" value="{{ start }}" />
+          <input type="datetime-local" class="form-control" name="end" value="{{ end }}" />
+          <input class="btn btn-primary" type="submit" value="Submit" />
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

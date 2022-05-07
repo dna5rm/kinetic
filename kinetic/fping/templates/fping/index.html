@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% load mathfilters %}
+{% block title %}fping{% if count != 0 %}: {{ query }}{% endif %}{% endblock %}
+{% block content %}
+<div class="container-fluid">
+  
+  <div class="row">
+    <div class="col-1" style="width: 185px;">
+      <div class="list-group">
+        <a href="." class="list-group-item list-group-item-success">
+          FPing Home
+        </a>
+        {% for agent in agents %}
+          <a href="{{ agent }}" class="list-group-item list-group-item-action">
+            {{ agent }}
+          </a>
+        {% endfor %}
+      </div>
+      <br />
+    </div>
+
+    <div class="col">
+      <div class="container-fluid shadow-lg p-3 mb-5 bg-body rounded">
+
+        <div class="row">
+          <div class="col">
+            <h1>FPing {% if count != 0 %}Query <span class="badge bg-dark">{{ count }}</span>{% else %}Report{% endif %}</h1>
+          </div>
+          <div class="col-3">
+            <form action="#" method="GET">
+             <div class="input-group">
+                <span class="input-group-text">Search</span>
+                <input type="search" class="form-control" name="query" value="{{ query }}">
+                <input class="btn btn-primary" type="submit" value="Submit" />
+              </div>
+            </form>
+          </div>
+        </div>
+        <br />
+
+        {% if count != 0 %}
+        <table class="table">
+          <thead>
+            <tr>
+              <th colspan="2" scope="col"></th>
+              <th colspan="3" class="table-primary text-center" scope="col">Current</th>
+              <th colspan="5" class="table-secondary text-center" scope="col">Average</th>
+              <th colspan="1" scope="col"></th>
+            </tr>
+            <tr>
+              <th scope="col">Host</th>
+              <th scope="col">Agent / Address</th>
+              <th class="table-primary text-center" scope="col">State</th>
+              <th class="table-primary text-center" scope="col">Median</th>
+              <th class="table-primary text-center" scope="col">Loss</th>
+              <th class="table-secondary text-center" scope="col">Median</th>
+              <th class="table-secondary text-center" scope="col">Minimum</th>
+              <th class="table-secondary text-center" scope="col">Maximum</th>
+              <th class="table-secondary text-center" scope="col">Std Dev</th>
+              <th class="table-secondary text-center" scope="col">Loss</th>
+              <th scope="col">Last Checked</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for lines, line in stats %}
+            <tr>
+              <th scope="row" rowspan="{{ lines }}">
+                {% if user.is_authenticated %}
+                <a href="/admin/fping/host/{{ line.0.1 }}" class="text-decoration-none">
+                  <img alt="edit" width="16" height="16" src="data:image/svg+xml;base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDI0IDI0IiBoZWlnaHQ9IjI0IiB2aWV3Qm94PSIwIDAgMjQgMjQiIHdpZHRoPSIyNCI+PGc+PHBhdGggZD0iTTAsMGgyNHYyNEgwVjB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE5LjE0LDEyLjk0YzAuMDQtMC4zLDAuMDYtMC42MSwwLjA2LTAuOTRjMC0wLjMyLTAuMDItMC42NC0wLjA3LTAuOTRsMi4wMy0xLjU4YzAuMTgtMC4xNCwwLjIzLTAuNDEsMC4xMi0wLjYxIGwtMS45Mi0zLjMyYy0wLjEyLTAuMjItMC4zNy0wLjI5LTAuNTktMC4yMmwtMi4zOSwwLjk2Yy0wLjUtMC4zOC0xLjAzLTAuNy0xLjYyLTAuOTRMMTQuNCwyLjgxYy0wLjA0LTAuMjQtMC4yNC0wLjQxLTAuNDgtMC40MSBoLTMuODRjLTAuMjQsMC0wLjQzLDAuMTctMC40NywwLjQxTDkuMjUsNS4zNUM4LjY2LDUuNTksOC4xMiw1LjkyLDcuNjMsNi4yOUw1LjI0LDUuMzNjLTAuMjItMC4wOC0wLjQ3LDAtMC41OSwwLjIyTDIuNzQsOC44NyBDMi42Miw5LjA4LDIuNjYsOS4zNCwyLjg2LDkuNDhsMi4wMywxLjU4QzQuODQsMTEuMzYsNC44LDExLjY5LDQuOCwxMnMwLjAyLDAuNjQsMC4wNywwLjk0bC0yLjAzLDEuNTggYy0wLjE4LDAuMTQtMC4yMywwLjQxLTAuMTIsMC42MWwxLjkyLDMuMzJjMC4xMiwwLjIyLDAuMzcsMC4yOSwwLjU5LDAuMjJsMi4zOS0wLjk2YzAuNSwwLjM4LDEuMDMsMC43LDEuNjIsMC45NGwwLjM2LDIuNTQgYzAuMDUsMC4yNCwwLjI0LDAuNDEsMC40OCwwLjQxaDMuODRjMC4yNCwwLDAuNDQtMC4xNywwLjQ3LTAuNDFsMC4zNi0yLjU0YzAuNTktMC4yNCwxLjEzLTAuNTYsMS42Mi0wLjk0bDIuMzksMC45NiBjMC4yMiwwLjA4LDAuNDcsMCwwLjU5LTAuMjJsMS45Mi0zLjMyYzAuMTItMC4yMiwwLjA3LTAuNDctMC4xMi0wLjYxTDE5LjE0LDEyLjk0eiBNMTIsMTUuNmMtMS45OCwwLTMuNi0xLjYyLTMuNi0zLjYgczEuNjItMy42LDMuNi0zLjZzMy42LDEuNjIsMy42LDMuNlMxMy45OCwxNS42LDEyLDE1LjZ6Ii8+PC9nPjwvc3ZnPg==" />
+                </a>
+                {% endif %}
+                <a href="./?query={{ line.0.0 }}" class="text-decoration-none text-dark">
+                  {{ line.0.0 }}
+                </a>
+              </th>{% for stat in line %}
+              <td scope="row">
+                <a href="{{ stat.12 }}" class="text-decoration-none">
+                  <span class="badge bg-primary align-middle">
+                    <img alt="agent" width="14" height="14" src="data:image/svg+xml;base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjI0Ij48cGF0aCBkPSJNMCAwaDI0djI0SDB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTIgMjBoMjB2LTRIMnY0em0yLTNoMnYySDR2LTJ6TTIgNHY0aDIwVjRIMnptNCAzSDRWNWgydjJ6bS00IDdoMjB2LTRIMnY0em0yLTNoMnYySDR2LTJ6Ii8+PC9zdmc+" />
+                    {{ stat.12 }}
+                  </span>
+                </a>
+                <a href="{{ stat.12 }}/{{ stat.1 }}" class="text-decoration-none">
+                  <span class="badge bg-secondary align-middle">
+                    <img alt="graph" width="14" height="14" src="data:image/svg+xml;base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDI0IDI0IiBoZWlnaHQ9IjI0IiB2aWV3Qm94PSIwIDAgMjQgMjQiIHdpZHRoPSIyNCI+PGc+PHJlY3QgZmlsbD0ibm9uZSIgaGVpZ2h0PSIyNCIgd2lkdGg9IjI0Ii8+PC9nPjxnPjxnPjxwYXRoIGQ9Ik0yMSw4Yy0xLjQ1LDAtMi4yNiwxLjQ0LTEuOTMsMi41MWwtMy41NSwzLjU2Yy0wLjMtMC4wOS0wLjc0LTAuMDktMS4wNCwwbC0yLjU1LTIuNTVDMTIuMjcsMTAuNDUsMTEuNDYsOSwxMCw5IGMtMS40NSwwLTIuMjcsMS40NC0xLjkzLDIuNTJsLTQuNTYsNC41NUMyLjQ0LDE1Ljc0LDEsMTYuNTUsMSwxOGMwLDEuMSwwLjksMiwyLDJjMS40NSwwLDIuMjYtMS40NCwxLjkzLTIuNTFsNC41NS00LjU2IGMwLjMsMC4wOSwwLjc0LDAuMDksMS4wNCwwbDIuNTUsMi41NUMxMi43MywxNi41NSwxMy41NCwxOCwxNSwxOGMxLjQ1LDAsMi4yNy0xLjQ0LDEuOTMtMi41MmwzLjU2LTMuNTUgQzIxLjU2LDEyLjI2LDIzLDExLjQ1LDIzLDEwQzIzLDguOSwyMi4xLDgsMjEsOHoiLz48cG9seWdvbiBwb2ludHM9IjE1LDkgMTUuOTQsNi45MyAxOCw2IDE1Ljk0LDUuMDcgMTUsMyAxNC4wOCw1LjA3IDEyLDYgMTQuMDgsNi45MyIvPjxwb2x5Z29uIHBvaW50cz0iMy41LDExIDQsOSA2LDguNSA0LDggMy41LDYgMyw4IDEsOC41IDMsOSIvPjwvZz48L2c+PC9zdmc+" />
+                    {{ stat.1 }}
+                  </span>
+                </a>
+              </td>
+              {% if stat.2 %}<td class="table-primary text-center text-success" scope="row">Up ({{ stat.3 }})</td>
+              {% else %}<td class="table-primary text-center text-danger" scope="row">Down ({{ stat.3 }})</td>
+              {% endif %}
+              {% if stat.2 %}<td class="table-primary text-center" scope="row">
+                {% if stat.4|sub:1 <= stat.6|add:stat.9 %}<span class="badge bg-success">{{ stat.4|floatformat:"2" }}</span>
+                {% elif stat.4|sub:1 <= stat.8 %}<span class="badge bg-warning">{{ stat.4|floatformat:"2" }}</span>
+                {% else %}<span class="badge bg-danger">{{ stat.4|floatformat:"2" }}</span>
+                {% endif %}</td>
+              {% else %}<td class="table-primary text-center" scope="row"><span class="badge bg-danger">--</span></td>
+              {% endif %}
+              {% if stat.2 %}<td class="table-primary text-center" scope="row">
+                {% if stat.5 < 7 %}<span class="badge bg-success">{{ stat.5 }}%</span>
+                {% elif stat.5 < 17 %}<span class="badge bg-warning">{{ stat.5 }}%</span>
+                {% else %}<span class="badge bg-danger">{{ stat.5 }}%</span>
+                {% endif %}
+              </td>
+              {% else %}<td class="table-primary text-center" scope="row"><span class="badge bg-danger">0%</span></td>
+              {% endif %}
+              <td class="table-secondary text-center" scope="row"><span class="badge bg-secondary">{{ stat.6|floatformat:"2" }}</span></td>
+              <td class="table-secondary text-center" scope="row"><span class="badge bg-secondary">{{ stat.7|floatformat:"2" }}</span></td>
+              <td class="table-secondary text-center" scope="row"><span class="badge bg-secondary">{{ stat.8|floatformat:"2" }}</span></td>
+              <td class="table-secondary text-center" scope="row"><span class="badge bg-secondary">{{ stat.9|floatformat:"2" }}</span></td>
+              <td class="table-secondary text-center" scope="row"><span class="badge bg-secondary">{{ stat.10 }}%</span></td>
+              <td scope="row">{{ stat.11 }}</td>
+
+            </tr>{% endfor %}
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+          <p>
+            FPing Wrapper is intended to be an easy to use fping & rrdtool frontend with a django backend.
+            It is essentially a client/server latency measurement tool.
+            Agents fetch a list of hosts to run fping against and then return the values back to the server where the data is handled.
+          </p>
+
+          <h2>Reports</h2>
+          <p><ul>
+            <li><a href="down">Hosts Currently Down</a></li>
+            <li><a href="loss">Hosts Experiencing Packet Loss</a></li>
+          </ul></p>
+
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

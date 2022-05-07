@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}Checklist{% endblock %}
+
+{% block content %}
+<h3>Checklist</h3>
+{% load crispy_forms_tags %}
+{% crispy form %}
+<br />
+{% endblock %}
