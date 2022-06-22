@@ -8,7 +8,7 @@ from json import dumps, loads
 from subprocess import Popen, PIPE
 from requests import session
 
-URL = "http://cafe.crc1.net:8000/agent/CAFE"
+URL = "http://kinetic.local:8000/agent/HOST"
 
 def probe_fping(opts, targets):
 
