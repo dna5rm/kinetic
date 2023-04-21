@@ -5,5 +5,5 @@ django-crispy-forms==1.14.0
 django-mathfilters==1.0.0
 gunicorn==20.1.0
 rrdtool==0.1.15
-sqlparse==0.4.2
+sqlparse==0.4.4
 timeago==1.0.15
