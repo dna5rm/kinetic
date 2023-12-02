@@ -1,35 +1,16 @@
-# Gunicorn
-Like most Django applications, Kinetic runs as a WSGI application behind an HTTP server.
+# Kinetic
+> This is currently being rewritten to use FastAPI
 
-## Configuration
+Kinetic is a network monitoring tool
 
-Kinetic ships with a default configuration file for gunicorn.
-To use it, copy /opt/kinetic/contrib/gunicorn.py to /opt/kinetic/gunicorn.py.
+## Modules
 
-## Building a virtual environment.
+pip install fastapi
+pip install "uvicorn[standard]"
+pip install sqlalchemy
 
-```
-mkdir /opt/kinetic/venv
-python3 -m venv /opt/kinetic/venv
-source /opt/kinetic/venv/bin/activate
-pip install -r /opt/kinetic/requirements.txt
-```
+## Permission issues
 
-## systemd Setup
+If you don't have to run as root you can give Python the same capabilities as /bin/ping, by doing:
 
-We'll use systemd to control both gunicorn and Kinetic's background worker process.
-First, copy contrib/kinetic.service to the /etc/systemd/system/ directory and reload the systemd daemon:
-
-```
-cp -v /opt/kinetic/contrib/*.service /etc/systemd/system/
-systemctl daemon-reload
-```
-
-Then, start the kinetic service and enable them to initiate at boot time:
-
-```
-systemctl start kinetic
-systemctl enable kinetic
-```
-
-Note: If the Kinetic service fails to start, issue the command journalctl -eu kinetic to check for log messages that may indicate the problem.
+`sudo setcap cap_net_raw+ep /usr/bin/python3.11`

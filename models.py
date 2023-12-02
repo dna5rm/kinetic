@@ -1,0 +1,58 @@
+""" Database Models """
+
+from datetime import datetime
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Float, DateTime
+from sqlalchemy.orm import relationship, backref
+from database import Base
+
+# Define the Agents model
+class Agents(Base):
+    """ Agents Table """
+    __tablename__ = "agents"
+
+    id          = Column(Integer, primary_key=True, index=True)
+    name        = Column(String, unique=True, index=True, nullable=False)
+    description = Column(String, index=True, default="")
+    is_active   = Column(Boolean, default=True, nullable=False)
+
+# Define the Hosts model
+class Hosts(Base):
+    """ Hosts Table """
+    __tablename__ = "hosts"
+
+    id          = Column(Integer, primary_key=True, index=True)
+    address     = Column(String, unique=True, index=True, nullable=False)
+    description = Column(String, index=True, default="")
+    is_active   = Column(Boolean, default=True, nullable=False)
+
+# Define the Monitors model
+class Monitors(Base):
+    """ Monitors Table """
+    __tablename__ = "monitors"
+
+    id             = Column(Integer, primary_key=True, index=True)
+    description    = Column(String, index=True, default="")
+    sample         = Column(Integer, default=0)
+    current_loss   = Column(Integer, default=0)
+    current_median = Column(Float, default=0)
+    current_min    = Column(Float, default=0)
+    current_max    = Column(Float, default=0)
+    current_stddev = Column(Float, default=0)
+    avg_loss       = Column(Integer, default=0)
+    avg_median     = Column(Float, default=0)
+    avg_min        = Column(Float, default=0)
+    avg_max        = Column(Float, default=0)
+    avg_stddev     = Column(Float, default=0)
+    prev_loss      = Column(Integer, default=0)
+    last_change    = Column(DateTime, default=datetime.now())
+    last_update    = Column(DateTime, default=datetime.now())
+    agent_id       = Column(Integer, ForeignKey('agents.id'), nullable=False)
+    host_id        = Column(Integer, ForeignKey('hosts.id'), nullable=False)
+    protocol       = Column(String, default="icmp")
+    port           = Column(Integer, default=0)
+    dscp           = Column(Integer, default=0)
+    pollcount      = Column(Integer, default=20)
+    is_active      = Column(Boolean, default=True, nullable=False)
+
+    agent          = relationship("Agents", backref=backref("monitors", cascade="all, delete-orphan"))
+    host           = relationship("Hosts", backref=backref("monitors", cascade="all, delete-orphan"))
