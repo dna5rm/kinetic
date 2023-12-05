@@ -3,7 +3,7 @@ Kinetic - CRUD operations for hosts db table
 """
 
 from typing import Annotated, Optional
-from pydantic import BaseModel, Field, validator, IPvAnyAddress
+from pydantic import BaseModel, Field, field_validator, IPvAnyAddress
 from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, HTTPException, Path
 from fastapi.encoders import jsonable_encoder
@@ -32,7 +32,7 @@ class HostModel(BaseModel):
     description: Optional[str] = Field(max_length=255, example="This is host 42")
     is_active: Optional[bool] = Field(example=True)
 
-    @validator('address')
+    @field_validator('address')
     def address_must_be_valid_ip(cls, v):
         """ Validate IP address """
         try:

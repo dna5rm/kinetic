@@ -21,10 +21,10 @@ app.include_router(agents.router)
 app.include_router(hosts.router)
 app.include_router(monitors.router)
 
-@app.route("/favicon.ico", include_in_schema=False)
-def favicon():
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
     """ Favicon """
-    return ""
+    return None
 
 @app.get("/", include_in_schema=False)
 async def root():
@@ -32,5 +32,4 @@ async def root():
     raise HTTPException(status_code=200, detail="Kinetic is running")
 
 if __name__ == '__main__':
-    uvicorn.run(app, port=8080, host="172.31.4.1")
-    
+    uvicorn.run(app, port=8080, host="127.0.0.1")

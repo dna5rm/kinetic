@@ -2,8 +2,17 @@
 
 from datetime import datetime
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Float, DateTime
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import relationship, backref, sessionmaker
 from database import Base
+
+# Define the table to store environment variables
+class Env(Base):
+    """ Environment Table """
+    __tablename__ = "env"
+
+    id          = Column(Integer, primary_key=True, index=True)
+    key         = Column(String, unique=True, index=True, nullable=False)
+    value       = Column(String, index=True, default="")    
 
 # Define the Agents model
 class Agents(Base):
@@ -56,3 +65,15 @@ class Monitors(Base):
 
     agent          = relationship("Agents", backref=backref("monitors", cascade="all, delete-orphan"))
     host           = relationship("Hosts", backref=backref("monitors", cascade="all, delete-orphan"))
+
+"""
+# Define the table to store the user accounts
+class Users(Base):
+    __tablename__ = "users"
+
+    id          = Column(Integer, primary_key=True, index=True)
+    username    = Column(String, unique=True, index=True, nullable=False)
+    password    = Column(String, index=True, nullable=False)
+    is_active   = Column(Boolean, default=True, nullable=False)
+    is_admin    = Column(Boolean, default=False, nullable=False)
+"""

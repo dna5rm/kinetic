@@ -3,7 +3,7 @@ Kinetic - CRUD operations for monitors db table
 """
 
 from typing import Annotated, Optional
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, HTTPException, Path
 from fastapi.encoders import jsonable_encoder
@@ -43,7 +43,7 @@ class MonitorModel(BaseModel):
     is_active: Optional[bool] = Field(example=True,
         description="Whether the monitor is active or not")
 
-    @validator("protocol")
+    @field_validator("protocol")
     def verify_protocol(cls, v):
         """ Verify protocol is valid """
 
@@ -52,7 +52,7 @@ class MonitorModel(BaseModel):
             raise ValueError("Protocol must be one of: tcp, udp, icmp")
         return v.lower()
 
-    @validator("port")
+    @field_validator("port")
     def verify_port(cls, v, values):
         """ Verify port is valid """
 
@@ -66,7 +66,7 @@ class MonitorModel(BaseModel):
             raise ValueError("Port for icmp must be 0")
         return v
 
-    @validator("dscp")
+    @field_validator("dscp")
     def verify_dscp(cls, v):
         """ Verify dscp is valid """
 
