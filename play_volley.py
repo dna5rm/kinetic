@@ -3,7 +3,7 @@ This script will send a volley of packets to a host and return the average laten
 """
 
 from pydantic import BaseModel, field_validator, IPvAnyAddress, ValidationError
-from scapy.all import sr1, IP, ICMP, TCP, UDP
+from scapy.all import sr1, IP, ICMP, TCP
 from json import dumps as json_dumps
 import time
 import logging                                                                                                    
