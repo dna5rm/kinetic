@@ -78,12 +78,11 @@ class volley(BaseModel):
 
         if self.protocol == 'icmp':
             # run the ping function and return the results
-            latency = volley.ICMP(self.ip, self.volley, self.dscp)
-            return volley.result(latency, self.volley, self.dscp)
+            latencies = volley.ICMP(self.ip, self.volley, self.dscp)
         
         if self.protocol == 'tcp' and self.port != 0:
             # run the TCP function and return the results
-            latency = volley.TCP(self.ip, self.volley, self.port, self.dscp)
+            latencies = volley.TCP(self.ip, self.volley, self.port, self.dscp)
             
         # create a list of all floats in the list
         valid = [x for x in latencies if isinstance(x, float)]
@@ -91,7 +90,7 @@ class volley(BaseModel):
         # add the average to the result if no result then return U
         if valid:
             result['lost'] = self.volley - len(valid)
-            result['percent_loss'] = round((result['lost'] / volley) * 100)
+            result['percent_loss'] = round((result['lost'] / self.volley) * 100)
             result['average'] = round((sum(valid) / len(valid)), 2)
             result['min'] = round(min(valid), 2)
             result['max'] = round(max(valid), 2)
@@ -107,11 +106,11 @@ class volley(BaseModel):
             result['stddev'] = "U"
 
         # add latency/loss to the result
-        result['tos'] = self.tos
+        result['tos'] = self.dscp
         result['results'] = latencies
 
         return json_dumps(result, indent=4)
-    
+
     def ICMP(host, volley=20, tos=0x00):
         """
         Send a volley of ICMP packets to a host and return the average latency and loss
@@ -149,7 +148,7 @@ class volley(BaseModel):
             latencies.append(latency)
 
         return latencies
- 
+
     def TCP(host, volley=5, port=443, tos=0x00):
         """
         Send a volley of TCP packets to a host and return the average latency and loss
@@ -190,8 +189,8 @@ class volley(BaseModel):
         return latencies
 
 if __name__ == '__main__':
-    print(volley(ip="172.31.4.129", protocol="tcp", port=22, dscp="EF"))
-    #print(volley(ip="172.31.4.129"))
+    #print(volley(ip="172.31.4.129", protocol="tcp", port=22, dscp="EF"))
+    print(volley(ip="172.31.4.129", volley=20, dscp="EF"))
 
     #print(volley.ICMP("172.31.4.129", 20, 0xE0))
     #print(volley.TCP("172.31.4.129", 5, 22, 0xE0))
