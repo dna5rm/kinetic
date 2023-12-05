@@ -74,6 +74,7 @@ class volley(BaseModel):
 
     def __str__(self):
         """ Return the string representation of the object """
+        result = {}
 
         if self.protocol == 'icmp':
             # run the ping function and return the results
@@ -83,18 +84,13 @@ class volley(BaseModel):
         if self.protocol == 'tcp' and self.port != 0:
             # run the TCP function and return the results
             latency = volley.TCP(self.ip, self.volley, self.port, self.dscp)
-            return volley.result(latency, self.volley, self.dscp)
-    
-    def result(latencies, volley=5, tos=0x00):
-        """ Return statistics of latencies """
-        result = {}
-
+            
         # create a list of all floats in the list
         valid = [x for x in latencies if isinstance(x, float)]
 
         # add the average to the result if no result then return U
         if valid:
-            result['lost'] = volley - len(valid)
+            result['lost'] = self.volley - len(valid)
             result['percent_loss'] = round((result['lost'] / volley) * 100)
             result['average'] = round((sum(valid) / len(valid)), 2)
             result['min'] = round(min(valid), 2)
@@ -102,7 +98,7 @@ class volley(BaseModel):
             result['median'] = round(sorted(valid)[len(valid) // 2], 2)
             result['stddev'] = round((sum([((x - result['average']) ** 2) for x in valid]) / len(valid)) ** 0.5, 2)
         else:
-            result['total_lost'] = volley
+            result['total_lost'] = self.volley
             result['percent_loss'] = 100
             result['average'] = "U"
             result['min'] = "U"
@@ -111,7 +107,7 @@ class volley(BaseModel):
             result['stddev'] = "U"
 
         # add latency/loss to the result
-        result['tos'] = tos
+        result['tos'] = self.tos
         result['results'] = latencies
 
         return json_dumps(result, indent=4)
