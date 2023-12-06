@@ -4,7 +4,7 @@ from datetime import datetime
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Float, DateTime, BigInteger
 from sqlalchemy.orm import relationship, backref
 from database import Base
-from uuid import uuid4 as UUID
+#from uuid import uuid4 as UUID
 
 # Define the table to store environment variables
 class Env(Base):
@@ -22,10 +22,10 @@ class Agents(Base):
 
     id          = Column(Integer, primary_key=True, index=True)
     name        = Column(String, unique=True, index=True, nullable=False)
+#   uuid        = Column(String, unique=True, index=True, nullable=False, default=str(UUID()))
     address     = Column(String, unique=True, index=True, nullable=True)
     description = Column(String, index=True, default="")
     last_seen   = Column(DateTime, default=datetime.now())
-#   uuid        = Column(String, unique=True, index=True, nullable=False, default=str(UUID()))
     is_active   = Column(Boolean, default=True, nullable=False)
 
 # Define the Hosts model
