@@ -33,11 +33,10 @@ class MonitorModel(BaseModel):
     description: Optional[str] = Field(max_length=255, example="Monitoring host",
         description="Monitor description")
     protocol: Optional[str] = Field(example="icmp",
-        description="Protocol to use [tcp, udp, icmp]")
+        description="Protocol to use [tcp or icmp]")
     port: Optional[int] = Field(ge=0, le=65535, example=0,
-        description="TCP/UDP Port number")
-    dscp: Optional[int] = Field(ge=0, le=56, example=0,
-        description="DSCP Value")
+        description="TCP Port number")
+    dscp: Optional[str] = Field(example="BE", description="DSCP Value")
     pollcount: Optional[int] = Field(ge=1, le=35, example=20,
         description="Number of polling cycles")
     is_active: Optional[bool] = Field(example=True,
@@ -48,36 +47,43 @@ class MonitorModel(BaseModel):
         """ Verify protocol is valid """
 
         # only accept tcp, udp, icmp
-        if v.lower() not in ("tcp", "udp", "icmp"):
-            raise ValueError("Protocol must be one of: tcp, udp, icmp")
+        if v.lower() not in ("tcp", "icmp"):
+            raise ValueError("Protocol must be one of: tcp, icmp")
         return v.lower()
 
-    @field_validator("port")
-    def verify_port(cls, v, values):
-        """ Verify port is valid """
-
-        # Get the protocol value from the values dictionary
-        protocol = values.get("protocol").lower()
-
-        # Verify port is valid for protocol
-        if v == 0 and protocol != "icmp":
-            raise ValueError("Port for tcp or udp must be between 1 and 65535")
-        if protocol == "icmp" and v != 0:
-            raise ValueError("Port for icmp must be 0")
+    @field_validator('port')
+    def validate_port(cls, v):
+        """ Validate port """
+        if v < 0 or v > 65535:
+            raise ValueError("Port must be a number between 0 and 65535")
         return v
 
-    @field_validator("dscp")
-    def verify_dscp(cls, v):
-        """ Verify dscp is valid """
+    @field_validator('dscp')
+    def validate_tos(cls, v):
+        """
+        Check if there is a TOS value.
+        If input is a string, convert to upper case and check if it is in the map.
+        """
 
-        # Verify dscp is valid in tuple
-        dscp = (0, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26,
-                28, 30, 32, 34, 36, 38, 40, 46, 48, 56)
+        # Define TOS hex mapping of DSCP names
+        dscp_name_map = {
+            "CS0": 0x00, "BE": 0x00,
+            "CS1": 0x20, "AF11": 0x28, "AF12": 0x30, "AF13": 0x38,
+            "CS2": 0x40, "AF21": 0x48, "AF22": 0x50, "AF23": 0x58,
+            "CS3": 0x60, "AF31": 0x68, "AF32": 0x70, "AF33": 0x78,
+            "CS4": 0x80, "AF41": 0x88, "AF42": 0x90, "AF43": 0x98,
+            "CS5": 0xA0, "EF": 0xB8,
+            "CS6": 0xC0,
+            "CS7": 0xE0
+        } #dscp_name_map[key]
 
-        # loop through tuple and raise error if not found
-        if v not in dscp:
-            raise ValueError(f"DSCP value should be {dscp}")
-        return v
+        # if input is a string, convert to upper case and check if it is in the map
+        if isinstance(v, str):
+            v = v.upper()
+            if v in dscp_name_map:
+                return v.upper()
+            else:
+                raise ValueError("Invalid DSCP name provided. Must be one of the following:", list(dscp_name_map.keys()))
 
 class MonitorUpdateModel(BaseModel):
     """ Monitor Update Model """

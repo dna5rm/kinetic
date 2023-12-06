@@ -2,14 +2,63 @@
 This script will send a volley of packets to a host and return the average latency and loss
 """
 
-from pydantic import BaseModel, field_validator, IPvAnyAddress, ValidationError
+from pydantic import BaseModel, Field, field_validator, IPvAnyAddress, ValidationError
 from scapy.all import sr1, IP, ICMP, TCP
-from json import dumps as json_dumps
+from json import dumps as json_dumps, loads as json_loads
 import time
 import logging                                                                                                    
+import requests
 
 # disable scapy warnings
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
+
+class ReadJobInput(BaseModel):
+    id: int = Field(ge=1)
+    address: str
+    protocol: str
+    port: int = Field(ge=0, le=65535)
+    dscp: str
+    pollcount: int = Field(ge=1, le=35)
+
+    @field_validator('address')
+    def validate_address(cls, v):
+        """ Validate IP address """
+        try:
+            IPvAnyAddress(v)
+        except ValueError as exc:
+            raise ValueError('Not a valid Address') from exc
+        return v
+    
+    @field_validator('protocol')
+    def validate_protocol(cls, v):
+        """ Validate protocol """
+        if v.lower() not in ['tcp', 'icmp']:
+            raise ValueError("Protocol must be either TCP or ICMP")
+        return v.lower()
+    
+    @field_validator('dscp')
+    def validate_tos(cls, v):
+        """ DSCP validation """
+
+        # Define TOS hex mapping of DSCP names
+        dscp_name_map = {
+            "CS0": 0x00, "BE": 0x00,
+            "CS1": 0x20, "AF11": 0x28, "AF12": 0x30, "AF13": 0x38,
+            "CS2": 0x40, "AF21": 0x48, "AF22": 0x50, "AF23": 0x58,
+            "CS3": 0x60, "AF31": 0x68, "AF32": 0x70, "AF33": 0x78,
+            "CS4": 0x80, "AF41": 0x88, "AF42": 0x90, "AF43": 0x98,
+            "CS5": 0xA0, "EF": 0xB8,
+            "CS6": 0xC0,
+            "CS7": 0xE0
+        } #dscp_name_map[key]
+
+        # if input is a string, convert to upper case and check if it is in the map
+        if isinstance(v, str):
+            v = v.upper()
+            if v in dscp_name_map:
+                return v.upper()
+            else:
+                raise ValueError("Invalid DSCP, must be one of the following:", list(dscp_name_map.keys()))
 
 class volley(BaseModel):
     ip: str
@@ -190,8 +239,37 @@ class volley(BaseModel):
 
 if __name__ == '__main__':
     #print(volley(ip="172.31.4.129", protocol="tcp", port=22, dscp="EF"))
-    print(volley(ip="172.31.4.129", volley=20, dscp="EF"))
+    #print(volley(ip="172.31.4.129", volley=20, dscp="EF"))
 
     #print(volley.ICMP("172.31.4.129", 20, 0xE0))
     #print(volley.TCP("172.31.4.129", 5, 22, 0xE0))
     #print(int(0xE0))
+
+
+    # http request against server
+    jobs = requests.get("http://127.0.0.1:8080/agent/1")
+
+    # loop through each job and print the results
+    for job in jobs.json():
+
+        # validate job against model and quit if invalid
+        try:
+            ReadJobInput(**job)
+        except ValidationError as e:
+            print(e.json())
+            quit()
+
+        # run a volley against the job and store the results
+        data = volley(ip=job['address'], protocol=job['protocol'], port=job['port'], volley=job['pollcount'], dscp=job['dscp'])
+        data = json_loads(str(data))
+        
+        submit = {
+            "id": job['id'],
+            "results": data['results']
+        }
+
+        # send results back to the server as a put request
+        requests.put("http://127.0.0.1:8080/agent/1", headers={"Content-Type": "application/json"}, data=json_dumps(submit))
+
+        print(json_dumps(submit))
+

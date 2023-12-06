@@ -4,7 +4,7 @@ import uvicorn
 from fastapi import FastAPI, HTTPException
 from database import engine
 import models
-from routers import agents, hosts, monitors
+from routers import agents, hosts, monitors, agent_jobs
 
 app = FastAPI(
     title="Kinetic",
@@ -17,9 +17,13 @@ app = FastAPI(
 
 models.Base.metadata.create_all(bind=engine)
 
+# Basic CRUD operations
 app.include_router(agents.router)
 app.include_router(hosts.router)
 app.include_router(monitors.router)
+
+# Agent job operations
+app.include_router(agent_jobs.router)
 
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
