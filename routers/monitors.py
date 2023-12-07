@@ -39,6 +39,8 @@ class MonitorModel(BaseModel):
     dscp: Optional[str] = Field(example="BE", description="DSCP Value")
     pollcount: Optional[int] = Field(ge=1, le=35, example=20,
         description="Number of polling cycles")
+    pollinterval: Optional[int] = Field(ge=1, le=3600, example=60,
+        description="Polling interval in seconds")
     is_active: Optional[bool] = Field(example=True,
         description="Whether the monitor is active or not")
 
@@ -105,6 +107,7 @@ class MonitorUpdateModel(BaseModel):
                         "port": 0,
                         "dscp": 0,
                         "pollcount": 20,
+                        "pollinterval": 60,
                         "is_active": True
                     }]
                 }
@@ -132,6 +135,7 @@ async def read_monitor_all(db: DBDependency):
             "port": monitor.port,
             "dscp": monitor.dscp,
             "pollcount": monitor.pollcount,
+            "pollinterval": monitor.pollinterval,
             "is_active": monitor.is_active
         })
     return monitors
@@ -149,6 +153,7 @@ async def read_monitor_all(db: DBDependency):
                     "port": 0,
                     "dscp": 0,
                     "pollcount": 20,
+                    "pollinterval": 60,
                     "is_active": True
                 }
             }
@@ -180,6 +185,7 @@ async def read_monitor_id(db: DBDependency, monitor_id: int):
         "port": monitor.port,
         "dscp": monitor.dscp,
         "pollcount": monitor.pollcount,
+        "pollinterval": monitor.pollinterval,
         "is_active": monitor.is_active
     }
 
@@ -196,6 +202,7 @@ async def read_monitor_id(db: DBDependency, monitor_id: int):
                     "port": 0,
                     "dscp": 0,
                     "pollcount": 20,
+                    "pollinterval": 60,
                     "is_active": True
                 }
             }
@@ -234,6 +241,7 @@ async def read_monitor_by_agent_id(db: DBDependency, agent_id: int):
             "port": monitor.port,
             "dscp": monitor.dscp,
             "pollcount": monitor.pollcount,
+            "pollinterval": monitor.pollinterval,
             "is_active": monitor.is_active
         })
     return monitors
@@ -251,6 +259,7 @@ async def read_monitor_by_agent_id(db: DBDependency, agent_id: int):
                     "port": 0,
                     "dscp": 0,
                     "pollcount": 20,
+                    "pollinterval": 60,
                     "is_active": True
                 }
             }
@@ -289,6 +298,7 @@ async def read_monitor_by_host_id(db: DBDependency, host_id: int):
             "port": monitor.port,
             "dscp": monitor.dscp,
             "pollcount": monitor.pollcount,
+            "pollinterval": monitor.pollinterval,
             "is_active": monitor.is_active
         })
     return monitors
@@ -306,8 +316,14 @@ async def read_monitor_by_host_id(db: DBDependency, host_id: int):
                     "port": 0,
                     "dscp": 0,
                     "pollcount": 20,
+                    "pollinterval": 60,
                     "is_active": True
                 }
+            }
+        }},
+        400: { "content": {
+            "application/json": {
+                "example": {"detail": "Bad Request"}
             }
         }},
         404: { "content": {
@@ -326,6 +342,7 @@ async def read_monitor_by_host_id(db: DBDependency, host_id: int):
                     "port": 0,
                     "dscp": 0,
                     "pollcount": 20,
+                    "pollinterval": 60,
                     "is_active": True
                 }
             }
@@ -360,6 +377,8 @@ async def create_monitor_id(db: DBDependency, monitor: MonitorModel):
                 "id", "agent_id", "host_id", "description", "protocol", "port", "dscp"
                 ])
             )
+    if monitor.protocol == "tcp" and monitor.port == 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Bad Request (port)")
 
     # If monitor does not exist, create and return 201 with database entry
     db_host = Monitors(**monitor.dict())
@@ -377,6 +396,7 @@ async def create_monitor_id(db: DBDependency, monitor: MonitorModel):
         "port": db_host.port,
         "dscp": db_host.dscp,
         "pollcount": db_host.pollcount,
+        "pollinterval": db_host.pollinterval,
         "is_active": db_host.is_active
     }
 

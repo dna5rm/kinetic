@@ -11,6 +11,7 @@ from fastapi.encoders import jsonable_encoder
 from starlette import status
 from models import Agents, Hosts, Monitors
 from database import SessionLocal
+from rrdHandler import rrdHandler
 
 router = APIRouter(
     prefix="/agent",
@@ -103,10 +104,10 @@ async def read_agent_job(request: Request, db: DBDependency, agent_id: int = Pat
         agent.last_seen = datetime.now()
         db.commit()
 
-        # Get all monitor jobs by agent id with last_update older than 1 minute
-        monitors = db.query(Monitors).filter(Monitors.agent_id == agent_id).filter(Monitors.is_active == True)\
-            .filter(Monitors.last_update < datetime.now() - timedelta(minutes=1)).all()
-
+        # Get all monitor jobs by agent id with last_update older than pollinterval
+        monitors = db.query(Monitors).filter(Monitors.agent_id == agent_id).filter(Monitors.is_active == True).all()
+        monitors = [monitor for monitor in monitors if monitor.last_update < datetime.now() - timedelta(seconds=monitor.pollinterval)]
+        
         # Lookup host names by host id
         for monitor in monitors:
             host = db.query(Hosts).filter(Hosts.id == monitor.host_id).filter(Hosts.is_active == True).first()
@@ -212,7 +213,8 @@ async def update_agent_job(request: Request, db: DBDependency, agent_id: int = P
             # Commit changes to database
             db.commit()
 
-            # Update RRD database
+            # run rrdHandler
+            rrdHandler(agent_id=agent.id, monitor_id=monitor.id, step=monitor.pollinterval, results=job_results)
             
         else:
             # Monitor job not found

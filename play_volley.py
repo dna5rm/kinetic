@@ -3,7 +3,7 @@ This script will send a volley of packets to a host and return the average laten
 """
 
 from pydantic import BaseModel, Field, field_validator, IPvAnyAddress, ValidationError
-from scapy.all import sr1, IP, ICMP, TCP
+from scapy.all import sr1, IP, IPv6, ICMP, ICMPv6EchoRequest, TCP
 from json import dumps as json_dumps, loads as json_loads
 import time
 import logging                                                                                                    
@@ -35,7 +35,7 @@ class ReadJobInput(BaseModel):
         if v.lower() not in ['tcp', 'icmp']:
             raise ValueError("Protocol must be either TCP or ICMP")
         return v.lower()
-    
+
     @field_validator('dscp')
     def validate_tos(cls, v):
         """ DSCP validation """
@@ -171,7 +171,11 @@ class volley(BaseModel):
         """
 
         latencies = []
-        packet = IP(dst=host, tos=tos)/ICMP(type=8, code=0)
+        
+        if ":" in host:
+            packet = IPv6(dst=host, hlim=64, tc=tos)/ICMPv6EchoRequest()
+        else:
+            packet = IP(dst=host, tos=tos)/ICMP(type=8, code=0)
 
         # Send the volley of packets
         for i in range(volley):
@@ -247,29 +251,39 @@ if __name__ == '__main__':
 
 
     # http request against server
-    jobs = requests.get("http://127.0.0.1:8080/agent/1")
+    try:
+        jobs = requests.get("http://127.0.0.1:8080/agent/1", headers={"Content-Type": "application/json"})
+    except requests.exceptions.ConnectionError as e:
+        print("Connection Error:", e)
+        quit()
 
     # loop through each job and print the results
-    for job in jobs.json():
+    if jobs:
+        for job in jobs.json():
 
-        # validate job against model and quit if invalid
-        try:
-            ReadJobInput(**job)
-        except ValidationError as e:
-            print(e.json())
-            quit()
+            # validate job against model and quit if invalid
+            try:
+                ReadJobInput(**job)
+            except ValidationError as e:
+                print(e.json())
+                quit()
 
-        # run a volley against the job and store the results
-        data = volley(ip=job['address'], protocol=job['protocol'], port=job['port'], volley=job['pollcount'], dscp=job['dscp'])
-        data = json_loads(str(data))
-        
-        submit = {
-            "id": job['id'],
-            "results": data['results']
-        }
+            # run a volley against the job and store the results
+            data = volley(ip=job['address'], protocol=job['protocol'], port=job['port'], volley=job['pollcount'], dscp=job['dscp'])
+            data = json_loads(str(data))
+            
+            submit = {
+                "id": job['id'],
+                "results": data['results']
+            }
 
-        # send results back to the server as a put request
-        requests.put("http://127.0.0.1:8080/agent/1", headers={"Content-Type": "application/json"}, data=json_dumps(submit))
+            # send results back to the server as a put request
+            try:
+                requests.put("http://127.0.0.1:8080/agent/1", headers={"Content-Type": "application/json"}, data=json_dumps(submit))
+            except requests.exceptions.ConnectionError as e:
+                print("Connection Error:", e)
+                quit()
 
-        print(json_dumps(submit))
-
+            print(json_dumps(submit))
+    else:
+        print("No jobs found")

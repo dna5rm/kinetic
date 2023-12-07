@@ -21,8 +21,8 @@ class Agents(Base):
     __tablename__ = "agents"
 
     id          = Column(Integer, primary_key=True, index=True)
-    name        = Column(String, unique=True, index=True, nullable=False)
 #   uuid        = Column(String, unique=True, index=True, nullable=False, default=str(UUID()))
+    name        = Column(String, unique=True, index=True, nullable=False)
     address     = Column(String, unique=True, index=True, nullable=True)
     description = Column(String, index=True, default="")
     last_seen   = Column(DateTime, default=datetime.now())
@@ -65,6 +65,7 @@ class Monitors(Base):
     port           = Column(Integer, default=0)
     dscp           = Column(String, default="BE")
     pollcount      = Column(Integer, default=20)
+    pollinterval   = Column(Integer, default=60)
     is_active      = Column(Boolean, default=True, nullable=False)
 
     agent          = relationship("Agents", backref=backref("monitors", cascade="all, delete-orphan"))
