@@ -1,0 +1,17 @@
+[tool.pylint.MASTER]
+load-plugins = "pylint_pydantic"
+
+[tool.poetry]
+name = "kinetic"
+version = "0.1.0"
+description = "Kinetic is a network monitoring tool"
+authors = ["dna5rm"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

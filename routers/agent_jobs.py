@@ -11,7 +11,7 @@ from fastapi.encoders import jsonable_encoder
 from starlette import status
 from models import Agents, Hosts, Monitors
 from database import SessionLocal
-from rrdHandler import rrdHandler
+from rrd_handler import RRDHandler
 
 router = APIRouter(
     prefix="/agent",
@@ -213,8 +213,8 @@ async def update_agent_job(request: Request, db: DBDependency, agent_id: int = P
             # Commit changes to database
             db.commit()
 
-            # run rrdHandler
-            rrdHandler(agent_id=agent.id, monitor_id=monitor.id, step=monitor.pollinterval, results=job_results)
+            # run RRHandler
+            RRDHandler(agent_id=agent.id, monitor_id=monitor.id, step=monitor.pollinterval, results=job_results)
             
         else:
             # Monitor job not found
