@@ -9,16 +9,27 @@
             <ul class="navbar-nav">
                 {% if title %}
                 <li class="nav-item active">
-                    <a class="nav-link" href="#">Home </a>
+                    <a class="nav-link" href="/console/#">Home </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/console/down">Down </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/console/loss">Loss </a>
                 </li>
                 {% endif %}
             </ul>
 
             <ul class="navbar-nav ml-auto">
-                {% if user %}
+                {% if title %}
+                <li class="nav-item">
+                    <a class="nav-link" href="/docs">API Docs</a>
+                </li>
+                <!--
                 <li class="nav-item m-1">
                     <a type="button" class="btn btn-outline-light" href="/auth/logout">Logout</a>
                 </li>
+                -->
                 {% endif %}
             </ul>
         </div>
