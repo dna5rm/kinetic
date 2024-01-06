@@ -42,7 +42,7 @@ class RRDHandler(BaseModel):
         results = self.results
         rrd_file = "rra_data/" + md5((str(agent_id) + "-" + str(monitor_id)).encode()).hexdigest() + ".rrd"
 
-        print(f"agent_id: {agent_id}\nmonitor_id: {monitor_id}\nstep: {step}\nresults: {results}\nrrd_file: {rrd_file}")
+        #print(f"agent_id: {agent_id}\nmonitor_id: {monitor_id}\nstep: {step}\nresults: {results}\nrrd_file: {rrd_file}")
 
         # use pathlib to check if file exists
         if Path(rrd_file).is_file():
