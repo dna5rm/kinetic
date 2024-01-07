@@ -257,5 +257,32 @@ async def console_host(request: Request, host_id: int, db: DBDependency):
 
 @router.get("/monitor/{monitor_id}", response_class=HTMLResponse)
 async def console_monitor(request: Request, monitor_id: int, db: DBDependency):
+    """ Console - Monitor Graphs """
+    # get monitor from database by monitor_id
+    monitor = db.query(Monitors).filter(Monitors.id == monitor_id).first()
+
+    # if monitor exists and is active
+    if monitor and monitor.is_active:
+
+        # get host from database by host_id
+        host = db.query(Hosts).filter(Hosts.id == monitor.host_id).first()
+
+        # get agent from database by agent_id
+        agent = db.query(Agents).filter(Agents.id == monitor.agent_id).first()
+
+        # if host and agent exists and is active
+        if host and host.is_active and agent and agent.is_active:
+
+            # Create context dictionary with monitor data
+            context = {
+                "request": request,
+                "title": request.app.title,
+                "monitor": monitor,
+                "host": host,
+                "agent": agent
+            }
+
+            return templates.TemplateResponse("monitor.html", context=context)
+
     # Default raise HTTPException with 404 status code
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"monitor_id not found")
