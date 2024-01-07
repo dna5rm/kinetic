@@ -6,12 +6,8 @@
 
     <div class="row">
       <div class="col text-center">
-        <h3>Source</h3>
+        <h3>{{ agent.name }}</h3>
         <dl class="dl-horizontal">
-          <dt>ID</dt>
-          <dd>{{ agent.id }}</dd>
-          <dt>Name</dt>
-          <dd>{{ agent.name }}</dd>
           <dt>Address</dt>
           <dd>{{ agent.address }}</dd>
           <dt>Description</dt>
@@ -21,8 +17,6 @@
       <div class="col text-center">
         <h3>Destination</h3>
         <dl class="dl-horizontal">
-          <dt>ID</dt>
-          <dd>{{ host.id }}</dd>
           <dt>Address</dt>
           <dd>{{ host.address }}</dd>
           <dt>Description</dt>
