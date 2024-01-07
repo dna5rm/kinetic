@@ -17,22 +17,22 @@
                 <dt>Description</dt>
                 <dd>{{ agent.description }}</dd>
                 <dt>Last Seen</dt>
-                <dd>{{ agent.last_seen }}</dd>
+                <dd>{{ agent_naturaltime }}</dd>
             </dl>
         </div>
         <div class="col container-fluid shadow-lg p-3 mb-5 bg-body rounded">
             <table class="table" id="sortable">
                 <thead>
                     <tr>
-                        <th colspan="2" scope="col"></th>
-                        <th colspan="3" class="table-primary text-center" scope="col">Current</th>
+                        <th colspan="3" class="text-center" scope="col">Monitor</th>
+                        <th colspan="2" class="table-primary text-center" scope="col">Current</th>
                         <th colspan="5" class="table-secondary text-center" scope="col">Average</th>
-                        <th colspan="1" scope="col"></th>
+                        <th colspan="1" class="text-center" scope="col"></th>
                     </tr>
                     <tr>
                         <th scope="col">Host</th>
-                        <th scope="col">Address</th>
-                        <th class="table-primary text-center" scope="col">State</th>
+                        <th scope="col">Description</th>
+                        <th class="text-center" scope="col">Protocol</th>
                         <th class="table-primary text-center" scope="col">Median</th>
                         <th class="table-primary text-center" scope="col">Loss</th>
                         <th class="table-secondary text-center" scope="col">Median</th>
@@ -40,49 +40,25 @@
                         <th class="table-secondary text-center" scope="col">Maximum</th>
                         <th class="table-secondary text-center" scope="col">Std Dev</th>
                         <th class="table-secondary text-center" scope="col">Loss</th>
-                        <th scope="col">Last Updated</th>
+                        <th class="text-center" scope="col">Up/Down</th>
                     </tr>
                 </thead>
                 <tbody>
+                    {% for stat in stats %}
                     <tr>
-                        <td> #HOST# </td>
-                        <td> #ADDRESS# </td>
-                        <td class="table-primary text-center"> #STATE# </td>
-                        <td class="table-primary text-center"> #MEDIAN# </td>
-                        <td class="table-primary text-center"> #LOSS# </td>
-                        <td class="table-secondary text-center"> #AVG_MED# </td>
-                        <td class="table-secondary text-center"> #AVG_MIN# </td>
-                        <td class="table-secondary text-center"> #AVG_MAX# </td>
-                        <td class="table-secondary text-center"> #AVG_STD# </td>
-                        <td class="table-secondary text-center"> #AVG_LOSS# </td>
-                        <td> #LAST UPDATE# </td>
+                        <td><a href="../monitor/{{ stat.id }}" title="{{ stat.host_address }}">{{ stat.host_description }}</a></td>
+                        <td> {{ stat.description }} </td>
+                        <td class="text-center" title="{{ stat.dscp }}">{% if stat.protocol|upper == 'ICMP' %}{{ stat.protocol }}{% else %}{{ stat.protocol }}/{{ stat.port }}{% endif %}</td>
+                        <td class="table-primary text-center"><span class="badge {{ monitor_colors.current_median }}">{{ stat.current_median }}</span></td>
+                        <td class="table-primary text-center"><span class="badge {{ monitor_colors.current_loss }}">{{ stat.current_loss }}%</span></td>
+                        <td class="table-secondary text-center"><span class="badge {{ monitor_colors.average_median }}">{{ stat.average_median }}</span></td>
+                        <td class="table-secondary text-center"><span class="badge {{ monitor_colors.average_minimum }}">{{ stat.average_minimum }}</span></td>
+                        <td class="table-secondary text-center"><span class="badge {{ monitor_colors.average_maximum }}">{{ stat.average_maximum }}</span></td>
+                        <td class="table-secondary text-center"><span class="badge {{ monitor_colors.average_stddev }}">{{ stat.average_stddev }}</span></td>
+                        <td class="table-secondary text-center"><span class="badge {{ monitor_colors.average_loss }}">{{ stat.average_loss }}%</span></td>
+                        <td class="text-center" title="Updated: {{ stat.last_update }}"> {{ stat.last_change }} </td>
                     </tr>
-                    <tr>
-                        <td> #HOST# </td>
-                        <td> #ADDRESS# </td>
-                        <td class="table-primary text-center"> #STATE# </td>
-                        <td class="table-primary text-center"> #MEDIAN# </td>
-                        <td class="table-primary text-center"> #LOSS# </td>
-                        <td class="table-secondary text-center"> #AVG_MED# </td>
-                        <td class="table-secondary text-center"> #AVG_MIN# </td>
-                        <td class="table-secondary text-center"> #AVG_MAX# </td>
-                        <td class="table-secondary text-center"> #AVG_STD# </td>
-                        <td class="table-secondary text-center"> #AVG_LOSS# </td>
-                        <td> #LAST UPDATE# </td>
-                    </tr>
-                    <tr>
-                        <td> #HOST# </td>
-                        <td> #ADDRESS# </td>
-                        <td class="table-primary text-center"> #STATE# </td>
-                        <td class="table-primary text-center"> #MEDIAN# </td>
-                        <td class="table-primary text-center"> #LOSS# </td>
-                        <td class="table-secondary text-center"> #AVG_MED# </td>
-                        <td class="table-secondary text-center"> #AVG_MIN# </td>
-                        <td class="table-secondary text-center"> #AVG_MAX# </td>
-                        <td class="table-secondary text-center"> #AVG_STD# </td>
-                        <td class="table-secondary text-center"> #AVG_LOSS# </td>
-                        <td> #LAST UPDATE# </td>
-                    </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>

@@ -16,7 +16,7 @@ from rrd_handler import RRDHandler
 router = APIRouter(
     prefix="/agent",
     tags=["jobs"],
-    include_in_schema=True # Will be False when complete
+    include_in_schema=False
 )
 
 def get_db():
@@ -202,8 +202,8 @@ async def update_agent_job(request: Request, db: DBDependency, agent_id: int = P
             monitor.avg_max = round(((monitor.avg_max * (monitor.sample - 1)) + monitor.current_max) / monitor.sample, 2)
             monitor.avg_stddev = round(((monitor.avg_stddev * (monitor.sample - 1)) + monitor.current_stddev) / monitor.sample, 2)
 
-            # Update last_change row if current_loss is 100% or 0%
-            if monitor.current_loss == 0 or monitor.current_loss == monitor.pollcount:
+            # Update last_change row if current_loss is 100% or 0% based on previous loss
+            if monitor.current_loss == monitor.pollcount and monitor.prev_loss != monitor.pollcount:
                 monitor.last_change = datetime.now()
 
             # Update monitor job last_update
