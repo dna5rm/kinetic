@@ -30,7 +30,6 @@ server_start_time = datetime.now()
 # Set server start time in app
 app.server_start_time = server_start_time
 
-
 # Basic CRUD operations
 app.include_router(agents.router)
 app.include_router(hosts.router)
