@@ -2,7 +2,7 @@
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
 from database import engine
 import models
 from routers import agents, hosts, monitors, agent_jobs, console
@@ -44,7 +44,7 @@ app.include_router(console.router)
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
     """ Favicon """
-    return None
+    return FileResponse("static/favicon.ico")
 
 @app.get("/", include_in_schema=False)
 async def root():
