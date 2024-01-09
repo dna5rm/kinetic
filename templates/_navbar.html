@@ -17,6 +17,9 @@
                 <li class="nav-item">
                     <a class="nav-link" href="/console/loss">Loss </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/console/latency">Latency </a>
+                </li>
                 {% endif %}
             </ul>
 
@@ -32,7 +35,7 @@
                 -->
                 
                 <div class="col">
-                    <form action="." method="GET">
+                    <form action="/console/search" method="GET">
                         <div class="input-group">
                             <span class="input-group-text">Search</span>
                             <input type="search" class="form-control" name="query">

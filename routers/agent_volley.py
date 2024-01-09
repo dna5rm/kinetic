@@ -16,8 +16,8 @@ from database import SessionLocal
 from rrdtool import update, create
 
 router = APIRouter(
-    prefix="/agent",
-    tags=["jobs"],
+    prefix="/volley",
+    tags=["volley"],
     include_in_schema=False
 )
 
@@ -44,7 +44,7 @@ class JobSubmissionModel(BaseModel):
     Results: List of latency results
     """
     id: int = Field(..., gt=0)
-    results: list[float] = Field(..., min_items=1, max_items=35)
+    results: list[Union[float, str]] = Field(..., description="List of latency results")
 
     @field_validator("results")
     def validate_results(cls, v):

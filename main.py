@@ -5,9 +5,9 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, FileResponse
 from database import engine
 import models
-from routers import agents, hosts, monitors, agent_jobs, console
+from routers import agent_volley, agents, hosts, monitors, console
 from starlette.staticfiles import StaticFiles
-from datetime import datetime
+from datetime import datetime, tzinfo
 
 # Create FastAPI instance
 app = FastAPI(
@@ -24,11 +24,9 @@ models.Base.metadata.create_all(bind=engine)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Set server start time
-server_start_time = datetime.now()
-
 # Set server start time in app
-app.server_start_time = server_start_time
+app.server_start_time = datetime.now()
+app.server_timezone = datetime.now().astimezone().tzinfo
 
 # Basic CRUD operations
 app.include_router(agents.router)
@@ -36,7 +34,7 @@ app.include_router(hosts.router)
 app.include_router(monitors.router)
 
 # Agent job operations
-app.include_router(agent_jobs.router)
+app.include_router(agent_volley.router)
 
 # App UI operations pass server_start_time to console.router
 app.include_router(console.router)

@@ -253,7 +253,7 @@ if __name__ == '__main__':
 
     # http request against server
     try:
-        jobs = requests.get("http://127.0.0.1:8080/agent/1", headers={"Content-Type": "application/json"})
+        jobs = requests.get("http://127.0.0.1:8080/volley/1", headers={"Content-Type": "application/json"})
     except requests.exceptions.ConnectionError as e:
         print("Connection Error:", e)
         quit()
@@ -280,7 +280,7 @@ if __name__ == '__main__':
 
             # send results back to the server as a put request
             try:
-                requests.put("http://127.0.0.1:8080/agent/1", headers={"Content-Type": "application/json"}, data=json_dumps(submit))
+                requests.put("http://127.0.0.1:8080/volley/1", headers={"Content-Type": "application/json"}, data=json_dumps(submit))
             except requests.exceptions.ConnectionError as e:
                 print("Connection Error:", e)
                 quit()

@@ -1,25 +1,7 @@
 {% include '_layout.html' %}
 
-<div class="container-fluid text-center">
-    <h1>Agent {{ agent.name }}</h1>
-</div>
-
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-md-1">
-            <dl class="dl-horizontal">
-                <dt>ID</dt>
-                <dd>{{ agent.id }}</dd>
-                <dt>Name</dt>
-                <dd>{{ agent.name }}</dd>
-                <dt>Address</dt>
-                <dd>{{ agent.address }}</dd>
-                <dt>Description</dt>
-                <dd>{{ agent.description }}</dd>
-                <dt>Last Seen</dt>
-                <dd>{{ agent_naturaltime }}</dd>
-            </dl>
-        </div>
+
         <div class="col container-fluid shadow-lg p-3 mb-5 bg-body rounded">
             <table class="table" id="sortable">
                 <thead>
@@ -44,18 +26,18 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for stat in stats %}
+                    {% for stat in stats|sort(attribute='host_description') %}
                     <tr>
-                        <td><a href="../monitor/{{ stat.id }}" title="{{ stat.host_address }}">{{ stat.host_description }}</a></td>
+                        <td><a href="/console/monitor/{{ stat.id }}" title="{{ stat.host_address }}">{{ stat.host_description }}</a></td>
                         <td> {{ stat.description }} </td>
                         <td class="text-center" title="{{ stat.dscp }}">{% if stat.protocol|upper == 'ICMP' %}{{ stat.protocol }}{% else %}{{ stat.protocol }}/{{ stat.port }}{% endif %}</td>
-                        <td class="table-primary text-center"><span class="badge {{ monitor_colors.current_median }}">{{ stat.current_median }}</span></td>
-                        <td class="table-primary text-center"><span class="badge {{ monitor_colors.current_loss }}">{{ stat.current_loss }}%</span></td>
-                        <td class="table-secondary text-center"><span class="badge {{ monitor_colors.average_median }}">{{ stat.average_median }}</span></td>
-                        <td class="table-secondary text-center"><span class="badge {{ monitor_colors.average_minimum }}">{{ stat.average_minimum }}</span></td>
-                        <td class="table-secondary text-center"><span class="badge {{ monitor_colors.average_maximum }}">{{ stat.average_maximum }}</span></td>
-                        <td class="table-secondary text-center"><span class="badge {{ monitor_colors.average_stddev }}">{{ stat.average_stddev }}</span></td>
-                        <td class="table-secondary text-center"><span class="badge {{ monitor_colors.average_loss }}">{{ stat.average_loss }}%</span></td>
+                        <td class="table-primary text-center"><span class="badge {{ stat.current_median_color }}">{{ stat.current_median }}</span></td>
+                        <td class="table-primary text-center"><span class="badge {{ stat.current_loss_color }}">{{ stat.current_loss }}%</span></td>
+                        <td class="table-secondary text-center"><span class="badge {{ stat.average_median_color }}">{{ stat.average_median }}</span></td>
+                        <td class="table-secondary text-center"><span class="badge {{ stat.average_minimum_color }}">{{ stat.average_minimum }}</span></td>
+                        <td class="table-secondary text-center"><span class="badge {{ stat.average_maximum_color }}">{{ stat.average_maximum }}</span></td>
+                        <td class="table-secondary text-center"><span class="badge {{ stat.average_stddev_color }}">{{ stat.average_stddev }}</span></td>
+                        <td class="table-secondary text-center"><span class="badge {{ stat.average_loss_color }}">{{ stat.average_loss }}%</span></td>
                         <td class="text-center" title="Updated: {{ stat.last_update }}"> {{ stat.last_change }} </td>
                     </tr>
                     {% endfor %}

@@ -2,6 +2,8 @@
 Kinetic - CRUD operations for monitors db table
 """
 
+from os import remove
+from hashlib import md5
 from typing import Annotated, Optional
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
@@ -10,6 +12,7 @@ from fastapi.encoders import jsonable_encoder
 from starlette import status
 from models import Agents, Hosts, Monitors
 from database import SessionLocal
+
 
 router = APIRouter(
     prefix="/monitors",
@@ -466,6 +469,14 @@ async def delete_monitor_id(db: DBDependency, monitor_id: int = Path(..., gt=0))
     # Delete monitor from database
     db.delete(monitor)
     db.commit()
+
+    # delete the rrd file
+    rrd_file = "rra_data/" + md5((str(monitor.agent_id) + "-" + str(monitor_id)).encode()).hexdigest() + ".rrd"
+    # check if file exists if so delete it
+    try:
+        remove(rrd_file)
+    except OSError:
+        pass
 
     # Return 204 if monitor deleted
     return {"detail": "No Content"}
