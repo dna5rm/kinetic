@@ -49,6 +49,11 @@ templates = Jinja2Templates(directory="templates")
 class MonitorStats:
     """ Monitor Stats """
 
+    # Agent
+    agent_name: str
+    agent_address: str
+    agent_description: str
+
     # Monitor
     id: int
     description: str
@@ -96,8 +101,6 @@ class RRDGraph:
             rrd_file = [rrd_temp[0], "rra_data/" + md5((str(rrd_temp[1]) + "-" + str(rrd_temp[2])).encode()).hexdigest() + ".rrd"]
             if Path(rrd_file[1]).is_file():
                 rrd_files.append(rrd_file)
-
-        #rrd_files.append("rra_data/" + md5((str(rrds[0]) + "-" + str(rrds[1])).encode()).hexdigest() + ".rrd")
 
         if rrd_files:
             rrd_graph_str = []
@@ -158,8 +161,9 @@ class RRDGraph:
                     rrd_color = '#FF0000'
 
                 rrd_graph_str.append(f"DEF:loss{rrd_idx}={rrd_file[1]}:loss:LAST")
-                rrd_graph_str.append(f"LINE2:loss{rrd_idx}{rrd_color}:{rrd_file[0]}\t")
-                rrd_graph_str.append(f"GPRINT:loss{rrd_idx}:LAST:Current Loss\: %5.1lf%%\\j")
+                rrd_graph_str.append(f"CDEF:ploss{rrd_idx}=loss{rrd_idx},{polls},/,100,*")
+                rrd_graph_str.append(f"LINE2:ploss{rrd_idx}{rrd_color}:{rrd_file[0]}\t")
+                rrd_graph_str.append(f"GPRINT:ploss{rrd_idx}:LAST:Current Loss\: %5.1lf%%\\j")
 
             # Done Add footer w/date & time.
             # naturaldelta between start and end epoch times
@@ -344,25 +348,6 @@ def StatReport(db: DBDependency, monitors):
             current_stddev = monitor.current_stddev
             current_loss = int((monitor.current_loss / pollcount) * 100)
 
-            # threshold based on stddev of min and max.
-            # If stddev is greater than 10% of the difference between min and max, then the monitor is considered unstable
-            current_median_threshold = (current_max - current_min) * 0.10
-
-            if current_stddev > current_median_threshold:
-                current_median_color = "bg-warning"
-            elif current_median > current_max:
-                current_median_color = "bg-danger"
-            else:
-                current_median_color = "bg-success"
-                
-            # current loss threshold
-            if current_loss > 10:
-                current_loss_color = "bg-warning"
-            elif current_loss > 20:
-                current_loss_color = "bg-danger"
-            else:
-                current_loss_color = "bg-success"
-
             # get average stats from monitor
             average_median = monitor.avg_median
             average_minimum = monitor.avg_min
@@ -370,54 +355,84 @@ def StatReport(db: DBDependency, monitors):
             average_stddev = monitor.avg_stddev
             average_loss = int((monitor.avg_loss / pollcount) * 100)
 
-            # threshold based on stddev of min and max.
-            # If stddev is greater than 10% of the difference between min and max, then the monitor is considered unstable
-            average_median_threshold = (average_maximum - average_minimum) * 0.10
+            #### Threshold: Current Median ###
+            current_median_threshold = average_median + 2 * average_stddev
 
-            if average_stddev > average_median_threshold:
-                average_median_color = "bg-warning"
-            elif average_median > average_maximum:
-                average_median_color = "bg-danger"
+            if current_median > current_median_threshold:
+                current_median_color = "bg-danger" #red
+            elif current_median > average_median:
+                current_median_color = "bg-warning" #yellow
+            elif current_median == average_median:
+                current_median_color = "bg-info" #blue
             else:
-                average_median_color = "bg-success"
-
-            average_minimum_threshold = (average_maximum - average_minimum) * 0.10
-
-            if average_minimum < average_minimum_threshold:
-                average_minimum_color = "bg-warning"
-            elif average_minimum > average_maximum:
-                average_minimum_color = "bg-danger"
-            else:
-                average_minimum_color = "bg-success"
+                current_median_color = "bg-success" #green
                 
-            average_maximum_threshold = (average_maximum - average_minimum) * 0.10
-                
-            if average_maximum > average_maximum_threshold:
-                average_maximum_color = "bg-warning"
-            elif average_maximum < average_minimum:
-                average_maximum_color = "bg-danger"
+            ### Threshold: Current Loss ###
+            if current_loss < 2:
+                current_loss_color = "bg-success" #green
+            elif current_loss < 5:
+                current_loss_color = "bg-info" #blue
+            elif current_loss < 13:
+                current_loss_color = "bg-warning" #yellow
             else:
-                average_maximum_color = "bg-success"
+                current_loss_color = "bg-danger" #red
 
-            average_stddev_threshold = (average_maximum - average_minimum) * 0.10
+            #### Threshold: Average Median ###
+            average_median_threshold = average_median + (average_stddev * 2) # might need to be 3
+
+            if current_median < average_median_threshold:
+                average_median_color = "bg-success" #green
+            elif current_median < average_median_threshold + average_stddev:
+                average_median_color = "bg-info" #blue
+            elif current_median < average_median_threshold + (2 * average_stddev):
+                average_median_color = "bg-warning" #yellow
+            else:
+                average_median_color = "bg-danger" #red
+
+            #### Threshold: Average Minimum ###
+            if average_minimum <= (average_median - (3 * average_stddev)):
+                average_minimum_color = "bg-danger" #red
+            elif average_minimum <= (average_median - (2 * average_stddev)):
+                average_minimum_color = "bg-warning" #yellow
+            elif average_minimum <= (average_median - average_stddev):
+                average_minimum_color = "bg-info" #blue
+            else:
+                average_minimum_color = "bg-success" #green
+
+            #### Threshold: Average Maximum ###
+            if average_maximum >= (average_median + (3 * average_stddev)):
+                average_maximum_color = "bg-danger" #red
+            elif average_maximum >= (average_median + (2 * average_stddev)):
+                average_maximum_color = "bg-warning" #yellow
+            elif average_maximum >= (average_median + average_stddev):
+                average_maximum_color = "bg-info" #blue
+            else:
+                average_maximum_color = "bg-success" #green
+
+
+            #### Threshold: Average StdDev ###
+            average_stddev_threshold = abs((average_maximum - average_minimum) /2)
                 
             if average_stddev > average_stddev_threshold:
-                average_stddev_color = "bg-warning"
-            elif average_stddev > average_maximum:
-                average_stddev_color = "bg-danger"
+                average_stddev_color = "bg-info" #blue
             else:
-                average_stddev_color = "bg-success"
+                average_stddev_color = "bg-success" #green
 
-            # average loss threshold
-            if average_loss > 10:
-                average_loss_color = "bg-warning"
-            elif average_loss > 20:
-                average_loss_color = "bg-danger"
+            #### Threshold: Average Loss ###
+            if average_loss < 2:
+                average_loss_color = "bg-success" #green
+            elif average_loss < 5:
+                average_loss_color = "bg-info" #blue
+            elif average_loss < 13:
+                average_loss_color = "bg-warning" #yellow
             else:
-                average_loss_color = "bg-success"
+                average_loss_color = "bg-danger" #red
 
             # create a MonitorStats object of the monitor
             monitor_stats.append(MonitorStats(
+                agent_name=agent.name,
+                agent_address=agent.address,
+                agent_description=agent.description,
                 id=monitor.id,
                 description=monitor.description,
                 protocol=monitor.protocol,
@@ -503,6 +518,8 @@ async def console_agent(request: Request, agent_id: int, db: DBDependency):
         # append StatReport to context
         context.update(StatReport(db, monitor_match))
 
+        print(context)
+
     return templates.TemplateResponse("stats.html", context=context)
 
 @router.get("/host/{host_id}", response_class=HTMLResponse)
@@ -571,6 +588,79 @@ async def console_monitor(request: Request, monitor_id: int, db: DBDependency):
 
     # Default raise HTTPException with 404 status code
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"monitor_id not found")
+
+@router.get("/down", response_class=HTMLResponse)
+async def console_down(request: Request, db: DBDependency):
+    """ Console - Down Monitors """
+
+    # get all monitors where is_active is True
+    monitors = db.query(Monitors).filter(Monitors.is_active == True).all()
+
+    # create a flat list of all monitors that both current_loss and prev_loss are both equal to pollcount
+    monitor_match = [item for sublist in db.query(Monitors.id).filter(Monitors.current_loss == Monitors.pollcount).\
+        filter(Monitors.prev_loss == Monitors.pollcount).all() for item in sublist]
+    
+    # Create context dictionary with app title
+    context = {
+        "request": request,
+        "title": request.app.title,
+        "description": request.app.description,
+        "monitors": monitors
+    }
+
+    # append StatReport to context
+    context.update(StatReport(db, monitor_match))
+
+    # Include the app title in response.
+    return templates.TemplateResponse("stats.html", context=context)
+
+@router.get("/latency", response_class=HTMLResponse)
+async def console_latency(request: Request, db: DBDependency):
+    """ Console - Latency Monitors """
+
+    # get all monitors where is_active is True
+    monitors = db.query(Monitors).filter(Monitors.is_active == True).all()
+
+    # create a flat list of all monitors where current_median greater than average_median + (2 * average_stddev)
+    monitor_match = [item for sublist in db.query(Monitors.id).filter(Monitors.current_median > (Monitors.avg_median + (2 * Monitors.avg_stddev))).all() for item in sublist]
+
+    # Create context dictionary with app title
+    context = {
+        "request": request,
+        "title": request.app.title,
+        "description": request.app.description,
+        "monitors": monitors
+    }
+
+    # append StatReport to context
+    context.update(StatReport(db, monitor_match))
+
+    # Include the app title in response.
+    return templates.TemplateResponse("stats.html", context=context)
+
+@router.get("/loss", response_class=HTMLResponse)
+async def console_loss(request: Request, db: DBDependency):
+    """ Console - Loss Monitors """
+
+    # get all monitors where is_active is True
+    monitors = db.query(Monitors).filter(Monitors.is_active == True).all()
+
+    # create a flat list of all monitors where current_loss is not equal to 0
+    monitor_match = [item for sublist in db.query(Monitors.id).filter(Monitors.current_loss != 0).all() for item in sublist]
+
+    # Create context dictionary with app title
+    context = {
+        "request": request,
+        "title": request.app.title,
+        "description": request.app.description,
+        "monitors": monitors
+    }
+
+    # append StatReport to context
+    context.update(StatReport(db, monitor_match))
+
+    # Include the app title in response.
+    return templates.TemplateResponse("stats.html", context=context)
 
 @router.get("/search", response_class=HTMLResponse)
 async def console_search(request: Request, db: DBDependency):

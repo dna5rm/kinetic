@@ -11,7 +11,6 @@ Kinetic contains multiple router files located in the `kinetic/routers` director
 - console.py: Server Console
 - hosts.py: CRUD operations for hosts db table
 - monitors.py: CRUD operations for monitors db table
-- status.py: Healthcheck status endpoint (pending)
 
 ## Usage
 

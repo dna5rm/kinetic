@@ -1,4 +1,0 @@
-"""
-Kinetic - healthcheck status endpoint
-"""
-

@@ -6,15 +6,17 @@
             <table class="table" id="sortable">
                 <thead>
                     <tr>
-                        <th colspan="3" class="text-center" scope="col">Monitor</th>
+                        <th colspan="5" class="text-center" scope="col"></th>
                         <th colspan="2" class="table-primary text-center" scope="col">Current</th>
                         <th colspan="5" class="table-secondary text-center" scope="col">Average</th>
                         <th colspan="1" class="text-center" scope="col"></th>
                     </tr>
                     <tr>
+                        <th scope="col">Agent</th>
                         <th scope="col">Host</th>
-                        <th scope="col">Description</th>
+                        <th scope="col">Monitor</th>
                         <th class="text-center" scope="col">Protocol</th>
+                        <th class="text-center" scope="col">DSCP</th>
                         <th class="table-primary text-center" scope="col">Median</th>
                         <th class="table-primary text-center" scope="col">Loss</th>
                         <th class="table-secondary text-center" scope="col">Median</th>
@@ -26,11 +28,13 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for stat in stats|sort(attribute='host_description') %}
+                    {% for stat in stats|sort(attribute='description') %}
                     <tr>
-                        <td><a href="/console/monitor/{{ stat.id }}" title="{{ stat.host_address }}">{{ stat.host_description }}</a></td>
-                        <td> {{ stat.description }} </td>
+                        <td> {{ stat.agent_name }} </td>
+                        <td>{{ stat.host_description }}</td>
+                        <td><a href="/console/monitor/{{ stat.id }}" title="{{ stat.host_address }}">{{ stat.description }}</a></td>
                         <td class="text-center" title="{{ stat.dscp }}">{% if stat.protocol|upper == 'ICMP' %}{{ stat.protocol }}{% else %}{{ stat.protocol }}/{{ stat.port }}{% endif %}</td>
+                        <td class="text-center" title="{{ stat.dscp }}">{{ stat.dscp }}</td>
                         <td class="table-primary text-center"><span class="badge {{ stat.current_median_color }}">{{ stat.current_median }}</span></td>
                         <td class="table-primary text-center"><span class="badge {{ stat.current_loss_color }}">{{ stat.current_loss }}%</span></td>
                         <td class="table-secondary text-center"><span class="badge {{ stat.average_median_color }}">{{ stat.average_median }}</span></td>

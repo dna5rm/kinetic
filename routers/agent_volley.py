@@ -310,21 +310,29 @@ async def update_agent_job(request: Request, db: DBDependency, agent_id: int = P
             monitor.prev_loss = monitor.current_loss
 
             # Current Volley Stats
-            monitor.current_loss = monitor.pollcount - len(valid)
-            monitor.current_median = round(sorted(valid)[len(valid) // 2], 2)
-            monitor.current_min = round(min(valid), 2)
-            monitor.current_max = round(max(valid), 2)
-            monitor.current_stddev = round((sum([((x - monitor.current_median) ** 2) for x in valid]) / len(valid)) ** 0.5, 2)
-            
-            # Aveage Volley Stats
-            monitor.avg_loss = round(((monitor.avg_loss * (monitor.sample - 1)) + monitor.current_loss) / monitor.sample)
-            monitor.avg_median = round(((monitor.avg_median * (monitor.sample - 1)) + monitor.current_median) / monitor.sample, 2)
-            monitor.avg_min = round(((monitor.avg_min * (monitor.sample - 1)) + monitor.current_min) / monitor.sample, 2)
-            monitor.avg_max = round(((monitor.avg_max * (monitor.sample - 1)) + monitor.current_max) / monitor.sample, 2)
-            monitor.avg_stddev = round(((monitor.avg_stddev * (monitor.sample - 1)) + monitor.current_stddev) / monitor.sample, 2)
+            if valid:  # Check if the list is not empty
+                monitor.current_loss = monitor.pollcount - len(valid)
+                monitor.current_median = round(sorted(valid)[len(valid) // 2], 2)
+                monitor.current_min = round(min(valid), 2)
+                monitor.current_max = round(max(valid), 2)
+                monitor.current_stddev = round((sum([((x - monitor.current_median) ** 2) for x in valid]) / len(valid)) ** 0.5, 2)
 
-            # Update last_change row if current_loss is 100% or 0% based on previous loss
+                # Aveage Volley Stats
+                monitor.avg_median = round(((monitor.avg_median * (monitor.sample - 1)) + monitor.current_median) / monitor.sample, 2)
+                monitor.avg_min = round(((monitor.avg_min * (monitor.sample - 1)) + monitor.current_min) / monitor.sample, 2)
+                monitor.avg_max = round(((monitor.avg_max * (monitor.sample - 1)) + monitor.current_max) / monitor.sample, 2)
+                monitor.avg_stddev = round(((monitor.avg_stddev * (monitor.sample - 1)) + monitor.current_stddev) / monitor.sample, 2)
+            else:
+                monitor.current_loss = monitor.pollcount
+            
+            # Always update average loss
+            monitor.avg_loss = round(((monitor.avg_loss * (monitor.sample - 1)) + monitor.current_loss) / monitor.sample)
+
+            # Update last_change if host goes down from up
             if monitor.current_loss == monitor.pollcount and monitor.prev_loss != monitor.pollcount:
+                monitor.last_change = datetime.now()
+            # Update last_change if host goes up from down
+            elif monitor.current_loss != monitor.pollcount and monitor.prev_loss == monitor.pollcount:
                 monitor.last_change = datetime.now()
 
             # Update monitor job last_update
