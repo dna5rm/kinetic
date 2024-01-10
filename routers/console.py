@@ -518,8 +518,6 @@ async def console_agent(request: Request, agent_id: int, db: DBDependency):
         # append StatReport to context
         context.update(StatReport(db, monitor_match))
 
-        print(context)
-
     return templates.TemplateResponse("stats.html", context=context)
 
 @router.get("/host/{host_id}", response_class=HTMLResponse)
