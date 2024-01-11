@@ -210,6 +210,10 @@ async def read_agent_job(request: Request, db: DBDependency, agent_id: int = Pat
     else:
         agent_address = request.client.host
 
+    # Dont update agent address if localhost
+    if agent_address == "127.0.0.1":
+        agent_address = None
+
     # Get agent from database
     agent = db.query(Agents).filter(Agents.id == agent_id).filter(Agents.is_active == True).first()
 
@@ -218,7 +222,7 @@ async def read_agent_job(request: Request, db: DBDependency, agent_id: int = Pat
         response = []
 
         # Update agent address if changed
-        if agent.address != agent_address:
+        if agent_address and agent.address != agent_address:
             agent.address = agent_address
         
         # Update agent last_seen
@@ -282,6 +286,10 @@ async def update_agent_job(request: Request, db: DBDependency, agent_id: int = P
         agent_address = request.headers.get('X-Forwarded-For').split(',')[0]
     else:
         agent_address = request.client.host
+
+    # Dont update agent address if localhost
+    if agent_address == "127.0.0.1":
+        agent_address = None
 
     # Get agent from database
     agent = db.query(Agents).filter(Agents.id == agent_id).filter(Agents.is_active == True).first()

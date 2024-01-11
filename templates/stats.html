@@ -1,52 +1,72 @@
 {% include '_layout.html' %}
 
 <div class="container-fluid">
-
-        <div class="col container-fluid shadow-lg p-3 mb-5 bg-body rounded">
-            <table class="table" id="sortable">
-                <thead>
-                    <tr>
-                        <th colspan="5" class="text-center" scope="col"></th>
-                        <th colspan="2" class="table-primary text-center" scope="col">Current</th>
-                        <th colspan="5" class="table-secondary text-center" scope="col">Average</th>
-                        <th colspan="1" class="text-center" scope="col"></th>
-                    </tr>
-                    <tr>
-                        <th scope="col">Agent</th>
-                        <th scope="col">Host</th>
-                        <th scope="col">Monitor</th>
-                        <th class="text-center" scope="col">Protocol</th>
-                        <th class="text-center" scope="col">DSCP</th>
-                        <th class="table-primary text-center" scope="col">Median</th>
-                        <th class="table-primary text-center" scope="col">Loss</th>
-                        <th class="table-secondary text-center" scope="col">Median</th>
-                        <th class="table-secondary text-center" scope="col">Minimum</th>
-                        <th class="table-secondary text-center" scope="col">Maximum</th>
-                        <th class="table-secondary text-center" scope="col">Std Dev</th>
-                        <th class="table-secondary text-center" scope="col">Loss</th>
-                        <th class="text-center" scope="col">Up/Down</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for stat in stats|sort(attribute='description') %}
-                    <tr>
-                        <td> {{ stat.agent_name }} </td>
-                        <td>{{ stat.host_description }}</td>
-                        <td><a href="/console/monitor/{{ stat.id }}" title="{{ stat.host_address }}">{{ stat.description }}</a></td>
-                        <td class="text-center" title="{{ stat.dscp }}">{% if stat.protocol|upper == 'ICMP' %}{{ stat.protocol }}{% else %}{{ stat.protocol }}/{{ stat.port }}{% endif %}</td>
-                        <td class="text-center" title="{{ stat.dscp }}">{{ stat.dscp }}</td>
-                        <td class="table-primary text-center"><span class="badge {{ stat.current_median_color }}">{{ stat.current_median }}</span></td>
-                        <td class="table-primary text-center"><span class="badge {{ stat.current_loss_color }}">{{ stat.current_loss }}%</span></td>
-                        <td class="table-secondary text-center"><span class="badge {{ stat.average_median_color }}">{{ stat.average_median }}</span></td>
-                        <td class="table-secondary text-center"><span class="badge {{ stat.average_minimum_color }}">{{ stat.average_minimum }}</span></td>
-                        <td class="table-secondary text-center"><span class="badge {{ stat.average_maximum_color }}">{{ stat.average_maximum }}</span></td>
-                        <td class="table-secondary text-center"><span class="badge {{ stat.average_stddev_color }}">{{ stat.average_stddev }}</span></td>
-                        <td class="table-secondary text-center"><span class="badge {{ stat.average_loss_color }}">{{ stat.average_loss }}%</span></td>
-                        <td class="text-center" title="Updated: {{ stat.last_update }}"> {{ stat.last_change }} </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    {% if request.scope.route.name -%}
+    <div class="row">
+        <div class="col">
+            <h1 class="display-4">Statistics</h1>
+            {% if agent and request.scope.route.name == 'console_agent' %}<pre>
+            Agent<sup>{{ agent.id }}</sup>: {{ agent.name }} ({{ agent.address }})
+            Description: {{ agent.description }}
+            Last Seen: {{ agent.last_seen }}
+            </pre>{% endif %}
         </div>
     </div>
+    {% endif %}
+    <div class="col container-fluid shadow-lg p-3 mb-5 bg-body rounded">
+        <table class="table" id="sortable">
+            <thead>
+                <tr>
+                    <th colspan="5" class="text-center" scope="col"></th>
+                    <th colspan="2" class="table-primary text-center" scope="col">Current</th>
+                    <th colspan="5" class="table-secondary text-center" scope="col">Average</th>
+                    <th colspan="1" class="text-center" scope="col"></th>
+                </tr>
+                <tr>
+                    <th scope="col">Agent</th>
+                    <th scope="col">Host</th>
+                    <th scope="col">Monitor</th>
+                    <th class="text-center" scope="col">Protocol</th>
+                    <th class="text-center" scope="col">DSCP</th>
+                    <th class="table-primary text-center" scope="col">Median</th>
+                    <th class="table-primary text-center" scope="col">Loss</th>
+                    <th class="table-secondary text-center" scope="col">Median</th>
+                    <th class="table-secondary text-center" scope="col">Minimum</th>
+                    <th class="table-secondary text-center" scope="col">Maximum</th>
+                    <th class="table-secondary text-center" scope="col">Std Dev</th>
+                    <th class="table-secondary text-center" scope="col">Loss</th>
+                    <th class="text-center" scope="col">Up/Down</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in stats|sort(attribute='description') %}
+                <tr>
+                    <td> {{ stat.agent_name }} </td>
+                    <td>{{ stat.host_description }}</td>
+                    <td><a href="/console/monitor/{{ stat.id }}" title="{{ stat.host_address }}">{{ stat.description
+                            }}</a></td>
+                    <td class="text-center" title="{{ stat.dscp }}">{% if stat.protocol|upper == 'ICMP' %}{{
+                        stat.protocol }}{% else %}{{ stat.protocol }}/{{ stat.port }}{% endif %}</td>
+                    <td class="text-center" title="{{ stat.dscp }}">{{ stat.dscp }}</td>
+                    <td class="table-primary text-center"><span class="badge {{ stat.current_median_color }}">{{
+                            stat.current_median }}</span></td>
+                    <td class="table-primary text-center"><span class="badge {{ stat.current_loss_color }}">{{
+                            stat.current_loss }}%</span></td>
+                    <td class="table-secondary text-center"><span class="badge {{ stat.average_median_color }}">{{
+                            stat.average_median }}</span></td>
+                    <td class="table-secondary text-center"><span class="badge {{ stat.average_minimum_color }}">{{
+                            stat.average_minimum }}</span></td>
+                    <td class="table-secondary text-center"><span class="badge {{ stat.average_maximum_color }}">{{
+                            stat.average_maximum }}</span></td>
+                    <td class="table-secondary text-center"><span class="badge {{ stat.average_stddev_color }}">{{
+                            stat.average_stddev }}</span></td>
+                    <td class="table-secondary text-center"><span class="badge {{ stat.average_loss_color }}">{{
+                            stat.average_loss }}%</span></td>
+                    <td class="text-center" title="Updated: {{ stat.last_update }}"> {{ stat.last_change }} </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
 </div>
