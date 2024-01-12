@@ -9,6 +9,7 @@ from typing import Annotated, Optional, Union
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, HTTPException, Path, Request
+from fastapi.responses import PlainTextResponse
 from fastapi.encoders import jsonable_encoder
 from starlette import status
 from models import Agents, Hosts, Monitors
@@ -175,6 +176,12 @@ class RRDHandler(BaseModel):
 
         # update RRD file
         update(rrd)
+
+@router.get("/", status_code=status.HTTP_200_OK)
+async def volley_script():
+    """ Retrun the volley.py script """
+    response = PlainTextResponse(open("volley.py", "r").read())
+    return response
 
 @router.get("/{agent_id}", status_code=status.HTTP_200_OK,
     responses={

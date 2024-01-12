@@ -2,10 +2,6 @@
 
 <div class="d-flex align-items-center justify-content-center">
   <div class="content-center shadow-lg p-3 mb-5 bg-body rounded" style="width: 730px;">
-    <div class="badge badge-primary text-wrap" style="width: 100%;">
-      <h1><a style="color:black;" href="../agent/{{ agent.id }}">{{ agent.name }}</a></h1>
-    </div>
-
     <div class="h-100 d-flex align-items-center justify-content-center">
       <svg width="640" height="180" xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -15,10 +11,12 @@
         </defs>
         <g transform="translate(10,20)">
           <rect rx="10" ry="10" width="150" height="40" stroke="#000" stroke-width="3" fill="#fff" opacity="0.5"></rect>
-          <text x="75" y="20" alignment-baseline="middle" font-family="monospace" font-size="16" fill="blue"
-            stroke-width="0" stroke="#000" text-anchor="middle">
-            {% if agent.address is none %}{{ agent.name }}{% else %}{{ agent.address }}{% endif %}
-          </text>
+          <a style="color:black; text-decoration: none;" href="../agent/{{ agent.id }}">
+            <text x="75" y="20" alignment-baseline="middle" font-family="monospace" font-size="16" fill="blue"
+              stroke-width="0" stroke="#000" text-anchor="middle">
+                {% if agent.address is none %}{{ agent.name }}{% else %}{{ agent.address }}{% endif %}
+            </text>
+          </a>
         </g>
         <g transform="translate(245,20)">
           <rect rx="5" ry="5" width="150" height="40" stroke="#000" stroke-width="3" fill="#fc0" opacity="0.5"></rect>
@@ -32,8 +30,10 @@
         </g>
         <g transform="translate(480,20)">
           <rect rx="10" ry="10" width="150" height="40" stroke="#000" stroke-width="3" fill="#fff" opacity="0.5"></rect>
+          <a style="color:black; text-decoration: none;" href="/console/host/{{ host.id }}">
           <text x="75" y="20" alignment-baseline="middle" font-family="monospace" font-size="16" fill="blue"
             stroke-width="0" stroke="#000" text-anchor="middle">{{ host.address }}</text>
+          </a>
         </g>
         <g transform="translate(65,105)">
           <text x="5" y="-20" alignment-baseline="middle" font-family="monospace" font-size="16" fill="blue"
@@ -45,7 +45,7 @@
             interval</text>
         </g>
         Sorry, your browser does not support inline SVG.
-      </svg>
+      </svg>    
     </div>
 
     <div class="h-100 d-flex align-items-center justify-content-center">
@@ -80,6 +80,5 @@
         </div>
       </form>
     </div>
-
   </div>
 </div>

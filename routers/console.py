@@ -50,6 +50,7 @@ class MonitorStats:
     """ Monitor Stats """
 
     # Agent
+    agent_id: int
     agent_name: str
     agent_address: str
     agent_description: str
@@ -62,6 +63,7 @@ class MonitorStats:
     dscp: str
 
     # HOST
+    host_id: int
     host_address: str
     host_description: str
     last_change: str
@@ -430,6 +432,7 @@ def StatReport(db: DBDependency, monitors):
 
             # create a MonitorStats object of the monitor
             monitor_stats.append(MonitorStats(
+                agent_id=monitor.agent_id,
                 agent_name=agent.name,
                 agent_address=agent.address,
                 agent_description=agent.description,
@@ -438,8 +441,9 @@ def StatReport(db: DBDependency, monitors):
                 protocol=monitor.protocol,
                 port=monitor.port,
                 dscp=monitor.dscp,
-                host_description=host.description,
+                host_id=monitor.host_id,
                 host_address=host.address,
+                host_description=host.description,
                 last_change=last_change,
                 current_median=current_median,
                 current_loss=current_loss,
@@ -522,8 +526,29 @@ async def console_agent(request: Request, agent_id: int, db: DBDependency):
 
 @router.get("/host/{host_id}", response_class=HTMLResponse)
 async def console_host(request: Request, host_id: int, db: DBDependency):
-    # Default raise HTTPException with 404 status code
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"host_id not found")
+    """ Console - Monitors by Host """
+
+    # get host from database by host_id
+    host = db.query(Hosts).filter(Hosts.id == host_id).first()
+
+    # if agent esists and is active
+    if host and host.is_active:
+
+        # create a flat list of all monitors where agent_id is equal to agent.id
+        monitor_match = [item for sublist in db.query(Monitors.id).filter(Monitors.host_id == host.id).all() for item in sublist]
+
+        # Create context dictionary with agent data
+        context = {
+            "request": request,
+            "title": request.app.title,
+            "description": request.app.description,
+            "host": host
+        }
+
+        # append StatReport to context
+        context.update(StatReport(db, monitor_match))
+
+    return templates.TemplateResponse("stats.html", context=context)
 
 @router.get("/monitor/{monitor_id}", response_class=HTMLResponse)
 async def console_monitor(request: Request, monitor_id: int, db: DBDependency):

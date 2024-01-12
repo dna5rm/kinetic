@@ -14,3 +14,13 @@ h1, h2, h3, h4, h5, h6 {
 .main-color {
     background-color: #0e76a8 ;
 }
+
+.tooltip-inner {
+    background-color: #0e76a8 !important;
+    color: #fff ;
+}
+
+.bs-tooltip-bottom .arrow::before, 
+.bs-tooltip-auto[x-placement^="bottom"] .arrow::before {
+    border-bottom-color: #0e76a8 !important;
+}

@@ -8,14 +8,14 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-2 bg-light">
-            <h3>Volley Agents</h3>
+            <h3>Agents</h3>
             <ul>
                 {% for agent in agents %}
                 <li><a href="agent/{{ agent.id }}">{{ agent.name }}</a></li>
                 {% endfor %}
         </div>
         <div class="col">
-            <h3>{{ title }} Statistics</h3>
+            <h3>Server Statistics</h3>
             <p>Uptime is {{ stats.server_run_time }}.</p>
 
             <table class="table">
