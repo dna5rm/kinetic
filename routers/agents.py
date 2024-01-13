@@ -10,6 +10,7 @@ from fastapi.encoders import jsonable_encoder
 from starlette import status
 from models import Agents
 from database import SessionLocal
+from uuid import uuid4 as UUID
 
 router = APIRouter(
     prefix="/agents",
@@ -37,7 +38,7 @@ class AgentModel(BaseModel):
         200: { "content": {
             "application/json": {
                 "example": [{
-                    "id": 1,
+                    "id": "00000000-0000-0000-0000-000000000000",
                     "name": "agent1",
                     "description": "This is agent1",
                     "is_active": True
@@ -60,7 +61,7 @@ async def read_agent_all(db: DBDependency):
         200: { "content": {
             "application/json": {
                 "example": {
-                    "id": 1,
+                    "id": "00000000-0000-0000-0000-000000000000",
                     "name": "agent1",
                     "description": "This is agent1",
                     "is_active": True
@@ -78,7 +79,7 @@ async def read_agent_all(db: DBDependency):
         }
     }
 )
-async def read_agent_id(db: DBDependency, agent_id: int = Path(..., gt=0)):
+async def read_agent_id(db: DBDependency, agent_id: str = Path(..., min_length=36, max_length=36, pattern="^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}$")):
     """ Get agent by id """
     agent = db.query(Agents).filter(Agents.id == agent_id).first()
     if not agent:
@@ -90,7 +91,7 @@ async def read_agent_id(db: DBDependency, agent_id: int = Path(..., gt=0)):
         201: { "content": {
             "application/json": {
                 "example": {
-                    "id": 1,
+                    "id": "00000000-0000-0000-0000-000000000000",
                     "name": "agent1",
                     "description": "This is agent1",
                     "is_active": True
@@ -112,6 +113,11 @@ async def create_agent_id(db: DBDependency, agent: AgentModel):
 
     # If agent does not exist, create and return 201 with database entry
     db_agent = Agents(**agent.dict())
+
+    # Generate UUID for agent
+    db_agent.id = str(UUID())
+
+    # Add agent to database
     db.add(db_agent)
     db.commit()
     db.refresh(db_agent)
@@ -122,7 +128,7 @@ async def create_agent_id(db: DBDependency, agent: AgentModel):
         202: { "content": {
             "application/json": {
                 "example": {
-                    "id": 1,
+                    "id": "00000000-0000-0000-0000-000000000000",
                     "name": "agent1",
                     "description": "This is agent1",
                     "is_active": True
@@ -140,7 +146,7 @@ async def create_agent_id(db: DBDependency, agent: AgentModel):
         }
     }
 )
-async def update_agent_id(db: DBDependency, agent: AgentModel, agent_id: int = Path(..., gt=0)):
+async def update_agent_id(db: DBDependency, agent: AgentModel, agent_id: str = Path(..., min_length=36, max_length=36, pattern="^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}$")):
     """ Update an agent """
     db_agent = db.query(Agents).filter(Agents.id == agent_id).first()
     if not db_agent:
@@ -167,7 +173,7 @@ async def update_agent_id(db: DBDependency, agent: AgentModel, agent_id: int = P
         }}
     }
 )
-async def delete_agent_id(db: DBDependency, agent_id: int = Path(..., gt=0)):
+async def delete_agent_id(db: DBDependency, agent_id: str = Path(..., min_length=36, max_length=36, pattern="^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}$")):
     """ Delete an agent """
     db_agent = db.query(Agents).filter(Agents.id == agent_id).first()
     if not db_agent:

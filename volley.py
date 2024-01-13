@@ -14,7 +14,7 @@ import requests
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 
 class ReadJobInput(BaseModel):
-    id: int = Field(ge=1)
+    id: str = Field(..., pattern="^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$", description="Monitor by id")
     address: str
     protocol: str
     port: int = Field(ge=0, le=65535)
@@ -253,7 +253,7 @@ if __name__ == '__main__':
 
     # http request against server
     try:
-        jobs = requests.get("http://127.0.0.1:8080/volley/1", headers={"Content-Type": "application/json"})
+        jobs = requests.get("http://127.0.0.1:8080/volley/57897bec-ccec-4a6d-a973-7d2c26f21192", headers={"Content-Type": "application/json"})
     except requests.exceptions.ConnectionError as e:
         print("Connection Error:", e)
         quit()
@@ -280,7 +280,7 @@ if __name__ == '__main__':
 
             # send results back to the server as a put request
             try:
-                requests.put("http://127.0.0.1:8080/volley/1", headers={"Content-Type": "application/json"}, data=json_dumps(submit))
+                requests.put("http://127.0.0.1:8080/volley/57897bec-ccec-4a6d-a973-7d2c26f21192", headers={"Content-Type": "application/json"}, data=json_dumps(submit))
             except requests.exceptions.ConnectionError as e:
                 print("Connection Error:", e)
                 quit()

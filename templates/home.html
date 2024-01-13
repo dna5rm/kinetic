@@ -10,7 +10,7 @@
         <div class="col-2 bg-light">
             <h3>Agents</h3>
             <ul class="list-group">
-                {% for agent in agents %}
+                {% for agent in agents|sort(attribute='name') %}
                 <li class="list-group-item{% if not responding[loop.index0] %} list-group-item-danger{% endif %}">
                     <a href="/console/agent/{{ agent.id }}"{% if not responding[loop.index0] %} title="Last seen {{ last_seen[loop.index0] }}" data-toggle="tooltip"{% endif %}>
                         {{ agent.name }}

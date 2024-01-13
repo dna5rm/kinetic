@@ -10,6 +10,7 @@ from fastapi.encoders import jsonable_encoder
 from starlette import status
 from models import Hosts
 from database import SessionLocal
+from uuid import uuid4 as UUID
 
 router = APIRouter(
     prefix="/hosts",
@@ -46,7 +47,7 @@ class HostModel(BaseModel):
         200: { "content": {
             "application/json": {
                 "example": [{
-                    "id": 1,
+                    "id": "00000000-0000-0000-0000-000000000000",
                     "address": "192.0.2.42",
                     "description": "This is host 42",
                     "is_active": True
@@ -69,7 +70,7 @@ async def read_host_all(db: DBDependency):
         200: { "content": {
             "application/json": {
                 "example": {
-                    "id": 1,
+                    "id": "00000000-0000-0000-0000-000000000000",
                     "address": "192.0.2.42",
                     "description": "This is host 42",
                     "is_active": True
@@ -87,7 +88,7 @@ async def read_host_all(db: DBDependency):
         }
     }
 )
-async def read_host_id(db: DBDependency, host_id: int = Path(..., gt=0)):
+async def read_host_id(db: DBDependency, host_id: str = Path(..., min_length=36, max_length=36, pattern="^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}$")):
     """ Get host by id """
     host = db.query(Hosts).filter(Hosts.id == host_id).first()
     if not host:
@@ -99,7 +100,7 @@ async def read_host_id(db: DBDependency, host_id: int = Path(..., gt=0)):
         201: { "content": {
             "application/json": {
                 "example": {
-                    "id": 1,
+                    "id": "00000000-0000-0000-0000-000000000000",
                     "address": "192.0.2.42",
                     "description": "This is host 42",
                     "is_active": True
@@ -121,6 +122,11 @@ async def create_host_id(db: DBDependency, host: HostModel):
 
     # If host does not exist, create and return 201 with database entry
     db_host = Hosts(**host.dict())
+
+    # Generate UUID for host
+    db_host.id = str(UUID())
+
+    # Add host to database
     db.add(db_host)
     db.commit()
     db.refresh(db_host)
@@ -131,7 +137,7 @@ async def create_host_id(db: DBDependency, host: HostModel):
         202: { "content": {
             "application/json": {
                 "example": {
-                    "id": 1,
+                    "id": "00000000-0000-0000-0000-000000000000",
                     "address": "192.0.2.42",
                     "description": "This is host 42",
                     "is_active": True
@@ -149,7 +155,7 @@ async def create_host_id(db: DBDependency, host: HostModel):
         }
     }
 )
-async def update_host_id(db: DBDependency, host: HostModel, host_id: int = Path(..., gt=0)):
+async def update_host_id(db: DBDependency, host: HostModel, host_id: str = Path(..., min_length=36, max_length=36, pattern="^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}$")):
     """ Update a host """
     db_host = db.query(Hosts).filter(Hosts.id == host_id).first()
     if not db_host:
@@ -176,7 +182,7 @@ async def update_host_id(db: DBDependency, host: HostModel, host_id: int = Path(
         }}
     }
 )
-async def delete_host_id(db: DBDependency, host_id: int = Path(..., gt=0)):
+async def delete_host_id(db: DBDependency, host_id: str = Path(..., min_length=36, max_length=36, pattern="^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}$")):
     """ Delete a host """
     db_host = db.query(Hosts).filter(Hosts.id == host_id).first()
     if not db_host:

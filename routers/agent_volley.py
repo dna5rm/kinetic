@@ -44,7 +44,7 @@ class JobSubmissionModel(BaseModel):
     ID: Monitor job id
     Results: List of latency results
     """
-    id: int = Field(..., gt=0)
+    id: str = Field(..., pattern="^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$", description="Monitor job id")
     results: list[Union[float, str]] = Field(..., description="List of latency results")
 
     @field_validator("results")
@@ -65,14 +65,13 @@ class RRDHandler(BaseModel):
     Model for creating/updating RRD files.
 
     Attributes:
-        agent_id (int): ID of the agent
-        monitor_id (int): ID of the monitor
+        agent_id (str): ID of the agent
+        monitor_id (str): ID of the monitor
         step (int): RRD step in seconds
         results (list[int]): List of latency results
     """
-
-    agent_id: int = Field(..., gt=0)
-    monitor_id: int = Field(..., gt=0)
+    agent_id: str = Field(..., pattern="^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$", description="Agent id")
+    monitor_id: str = Field(..., pattern="^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$", description="Monitor job id")
     step: int = Field(..., gt=0, le=3600, description="RRD step in seconds")
     results: list[Union[float, str]] = Field(..., description="List of latency results")
 
@@ -109,7 +108,7 @@ class RRDHandler(BaseModel):
         Kinetic - Create RRD file with Kinetic results.
 
         Args:
-            agent_id (int): ID of the agent
+            agent_id (str): ID of the agent
             results (list[int]): List of latency results
             rrd_file (str): Path to RRD file
             step (int): RRD step in seconds
@@ -141,7 +140,7 @@ class RRDHandler(BaseModel):
         Kinetic - Update RRD file with Kinetic results.
         
         Args:
-            agent_id (int): ID of the agent
+            agent_id (str): ID of the agent
             results (list[int]): List of latency results
             rrd_file (str): Path to RRD file
         """
@@ -188,7 +187,7 @@ async def volley_script():
         200: { "content": {
             "application/json": {
                 "example": [{
-                        "host_id": 1,
+                        "host_id": "00000000-0000-0000-0000-000000000000",
                         "address": "192.0.2.42",
                         "protocol": "icmp",
                         "port": 0,
@@ -208,7 +207,7 @@ async def volley_script():
         }
     }
 )
-async def read_agent_job(request: Request, db: DBDependency, agent_id: int = Path(..., gt=0)):
+async def read_agent_job(request: Request, db: DBDependency, agent_id: str = Path(..., min_length=36, max_length=36, pattern="^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}$")):
     """ Get all monitor jobs by agent id """
 
     # Get agent address from request
@@ -281,7 +280,7 @@ async def read_agent_job(request: Request, db: DBDependency, agent_id: int = Pat
         }
     }
 )
-async def update_agent_job(request: Request, db: DBDependency, agent_id: int = Path(..., gt=0), job: JobSubmissionModel = None):
+async def update_agent_job(request: Request, db: DBDependency, job: JobSubmissionModel = None, agent_id: str = Path(..., min_length=36, max_length=36, pattern="^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}$")):
     """ Update monitor job by agent id """
 
     # get the id from the request body. This is the monitor job id

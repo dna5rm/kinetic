@@ -12,7 +12,7 @@ from fastapi.encoders import jsonable_encoder
 from starlette import status
 from models import Agents, Hosts, Monitors
 from database import SessionLocal
-
+from uuid import uuid4 as UUID
 
 router = APIRouter(
     prefix="/monitors",
@@ -31,8 +31,8 @@ DBDependency = Annotated[Session, Depends(get_db)]
 
 class MonitorModel(BaseModel):
     """ Monitor Model """
-    agent_id: int = Field(gt=0, example=1, description="Agent by ID")
-    host_id: int = Field(gt=0, example=1, description="Host by ID")
+    agent_id: str = Field(..., pattern="^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$", description="Agent by id")
+    host_id: str = Field(..., pattern="^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$", description="Host by id")
     description: Optional[str] = Field(max_length=255, example="Monitoring host",
         description="Monitor description")
     protocol: Optional[str] = Field(example="icmp",
@@ -102,9 +102,9 @@ class MonitorUpdateModel(BaseModel):
         200: { "content": {
             "application/json": {
                 "example": [{
-                        "id": 1,
-                        "agent_id": 1,
-                        "host_id": 1,
+                        "id": "00000000-0000-0000-0000-000000000000",
+                        "agent_id": "00000000-0000-0000-0000-000000000000",
+                        "host_id": "00000000-0000-0000-0000-000000000000",
                         "description": "Monitoring host",
                         "protocol": "icmp",
                         "port": 0,
@@ -148,9 +148,9 @@ async def read_monitor_all(db: DBDependency):
         200: { "content": {
             "application/json": {
                 "example": {
-                    "id": 1,
-                    "agent_id": 1,
-                    "host_id": 1,
+                    "id": "00000000-0000-0000-0000-000000000000",
+                    "agent_id": "00000000-0000-0000-0000-000000000000",
+                    "host_id": "00000000-0000-0000-0000-000000000000",
                     "description": "Monitoring host",
                     "protocol": "icmp",
                     "port": 0,
@@ -168,7 +168,7 @@ async def read_monitor_all(db: DBDependency):
         }},
     }
 )
-async def read_monitor_id(db: DBDependency, monitor_id: int):
+async def read_monitor_id(db: DBDependency, monitor_id: str = Path(..., min_length=36, max_length=36, pattern="^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}$")):
     """ Get a monitor by ID """
 
     # Get monitor from database
@@ -197,9 +197,9 @@ async def read_monitor_id(db: DBDependency, monitor_id: int):
         200: { "content": {
             "application/json": {
                 "example": {
-                    "id": 1,
-                    "agent_id": 1,
-                    "host_id": 1,
+                    "id": "00000000-0000-0000-0000-000000000000",
+                    "agent_id": "00000000-0000-0000-0000-000000000000",
+                    "host_id": "00000000-0000-0000-0000-000000000000",
                     "description": "Monitoring host",
                     "protocol": "icmp",
                     "port": 0,
@@ -217,7 +217,7 @@ async def read_monitor_id(db: DBDependency, monitor_id: int):
         }},
     }
 )
-async def read_monitor_by_agent_id(db: DBDependency, agent_id: int):
+async def read_monitor_by_agent_id(db: DBDependency, agent_id: str = Path(..., min_length=36, max_length=36, pattern="^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}$")):
     """ Get all monitors by agent ID """
 
     # Get agent from database
@@ -254,9 +254,9 @@ async def read_monitor_by_agent_id(db: DBDependency, agent_id: int):
         200: { "content": {
             "application/json": {
                 "example": {
-                    "id": 1,
-                    "agent_id": 1,
-                    "host_id": 1,
+                    "id": "00000000-0000-0000-0000-000000000000",
+                    "agent_id": "00000000-0000-0000-0000-000000000000",
+                    "host_id": "00000000-0000-0000-0000-000000000000",
                     "description": "Monitoring host",
                     "protocol": "icmp",
                     "port": 0,
@@ -274,7 +274,7 @@ async def read_monitor_by_agent_id(db: DBDependency, agent_id: int):
         }},
     }
 )
-async def read_monitor_by_host_id(db: DBDependency, host_id: int):
+async def read_monitor_by_host_id(db: DBDependency, host_id: str = Path(..., min_length=36, max_length=36, pattern="^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}$")):
     """ Get all monitors by host ID """
 
     # Get host from database
@@ -311,9 +311,9 @@ async def read_monitor_by_host_id(db: DBDependency, host_id: int):
         201: { "content": {
             "application/json": {
                 "example": {
-                    "id": 1,
-                    "agent_id": 1,
-                    "host_id": 1,
+                    "id": "00000000-0000-0000-0000-000000000000",
+                    "agent_id": "00000000-0000-0000-0000-000000000000",
+                    "host_id": "00000000-0000-0000-0000-000000000000",
                     "description": "Monitoring host",
                     "protocol": "icmp",
                     "port": 0,
@@ -337,9 +337,9 @@ async def read_monitor_by_host_id(db: DBDependency, host_id: int):
         409: { "content": {
             "application/json": {
                 "example": {
-                    "id": 1,
-                    "agent_id": 1,
-                    "host_id": 1,
+                    "id": "00000000-0000-0000-0000-000000000000",
+                    "agent_id": "00000000-0000-0000-0000-000000000000",
+                    "host_id": "00000000-0000-0000-0000-000000000000",
                     "description": "Monitoring host",
                     "protocol": "icmp",
                     "port": 0,
@@ -384,23 +384,28 @@ async def create_monitor_id(db: DBDependency, monitor: MonitorModel):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Bad Request (port)")
 
     # If monitor does not exist, create and return 201 with database entry
-    db_host = Monitors(**monitor.dict())
-    db.add(db_host)
+    db_monitor = Monitors(**monitor.dict())
+
+    # Generate UUID for agent
+    db_monitor.id = str(UUID())
+
+    # Add agent to database
+    db.add(db_monitor)
     db.commit()
-    db.refresh(db_host)
+    db.refresh(db_monitor)
 
     # Return only certain fields
     return {
-        "id": db_host.id,
-        "agent_id": db_host.agent_id,
-        "host_id": db_host.host_id,
-        "description": db_host.description,
-        "protocol": db_host.protocol,
-        "port": db_host.port,
-        "dscp": db_host.dscp,
-        "pollcount": db_host.pollcount,
-        "pollinterval": db_host.pollinterval,
-        "is_active": db_host.is_active
+        "id": db_monitor.id,
+        "agent_id": db_monitor.agent_id,
+        "host_id": db_monitor.host_id,
+        "description": db_monitor.description,
+        "protocol": db_monitor.protocol,
+        "port": db_monitor.port,
+        "dscp": db_monitor.dscp,
+        "pollcount": db_monitor.pollcount,
+        "pollinterval": db_monitor.pollinterval,
+        "is_active": db_monitor.is_active
     }
 
 @router.put("/{monitor_id}", status_code=status.HTTP_202_ACCEPTED,
@@ -420,7 +425,7 @@ async def create_monitor_id(db: DBDependency, monitor: MonitorModel):
         }},
     }
 )
-async def update_monitor_id(db: DBDependency, monitor: MonitorUpdateModel, monitor_id: int = Path(..., gt=0)):
+async def update_monitor_id(db: DBDependency, monitor: MonitorUpdateModel, monitor_id: str = Path(..., min_length=36, max_length=36, pattern="^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}$")):
     """ Update a monitor description and is_active and return updated monitor """
 
     # Get monitor from database
@@ -456,7 +461,7 @@ async def update_monitor_id(db: DBDependency, monitor: MonitorUpdateModel, monit
         }}
     }
 )
-async def delete_monitor_id(db: DBDependency, monitor_id: int = Path(..., gt=0)):
+async def delete_monitor_id(db: DBDependency, monitor_id: str = Path(..., min_length=36, max_length=36, pattern="^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}$")):
     """ Delete a monitor by ID """
 
     # Get monitor from database

@@ -4,7 +4,7 @@ from datetime import datetime
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Float, DateTime, BigInteger
 from sqlalchemy.orm import relationship, backref
 from database import Base
-#from uuid import uuid4 as UUID
+from uuid import uuid4 as UUID
 
 # Define the table to store environment variables
 class Env(Base):
@@ -20,8 +20,7 @@ class Agents(Base):
     """ Agents Table """
     __tablename__ = "agents"
 
-    id          = Column(Integer, primary_key=True, index=True)
-#   uuid        = Column(String, unique=True, index=True, nullable=False, default=str(UUID()))
+    id          = Column(String, primary_key=True, index=True, default=str(UUID()))
     name        = Column(String, unique=True, index=True, nullable=False)
     address     = Column(String, unique=True, index=True, nullable=True)
     description = Column(String, index=True, default="")
@@ -33,7 +32,7 @@ class Hosts(Base):
     """ Hosts Table """
     __tablename__ = "hosts"
 
-    id          = Column(Integer, primary_key=True, index=True)
+    id          = Column(String, primary_key=True, index=True, default=str(UUID()))
     address     = Column(String, unique=True, index=True, nullable=False)
     description = Column(String, index=True, default="")
     is_active   = Column(Boolean, default=True, nullable=False)
@@ -43,7 +42,7 @@ class Monitors(Base):
     """ Monitors Table """
     __tablename__ = "monitors"
 
-    id             = Column(Integer, primary_key=True, index=True)
+    id             = Column(String, primary_key=True, index=True, default=str(UUID()))
     description    = Column(String, index=True, default="")
     sample         = Column(BigInteger, default=0)
     current_loss   = Column(Integer, default=0)
@@ -59,8 +58,8 @@ class Monitors(Base):
     prev_loss      = Column(Integer, default=0)
     last_change    = Column(DateTime, default=datetime.now())
     last_update    = Column(DateTime, default=datetime.now())
-    agent_id       = Column(Integer, ForeignKey('agents.id'), nullable=False)
-    host_id        = Column(Integer, ForeignKey('hosts.id'), nullable=False)
+    agent_id       = Column(String, ForeignKey('agents.id'), nullable=False)
+    host_id        = Column(String, ForeignKey('hosts.id'), nullable=False)
     protocol       = Column(String, default="icmp")
     port           = Column(Integer, default=0)
     dscp           = Column(String, default="BE")
@@ -76,7 +75,7 @@ class Monitors(Base):
 class Users(Base):
     __tablename__ = "users"
 
-    id          = Column(Integer, primary_key=True, index=True)
+    id          = Column(String, primary_key=True, index=True, default=str(UUID()))
     username    = Column(String, unique=True, index=True, nullable=False)
     password    = Column(String, index=True, nullable=False)
     is_active   = Column(Boolean, default=True, nullable=False)

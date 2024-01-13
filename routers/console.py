@@ -7,7 +7,7 @@ from starlette.responses import RedirectResponse
 
 from typing import Annotated
 from sqlalchemy.orm import Session
-from fastapi import Depends, APIRouter, Request, HTTPException
+from fastapi import Depends, APIRouter, Request, HTTPException, Path
 from fastapi.responses import HTMLResponse
 from models import Agents, Hosts, Monitors
 from database import SessionLocal
@@ -17,7 +17,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from dataclasses import dataclass
 
-from pathlib import Path
+from pathlib import Path as FSPath
 from random import randint
 from re import sub
 from hashlib import md5
@@ -50,20 +50,20 @@ class MonitorStats:
     """ Monitor Stats """
 
     # Agent
-    agent_id: int
+    agent_id: str
     agent_name: str
     agent_address: str
     agent_description: str
 
     # Monitor
-    id: int
+    id: str
     description: str
     protocol: str
     port: int
     dscp: str
 
     # HOST
-    host_id: int
+    host_id: str
     host_address: str
     host_description: str
     last_change: str
@@ -101,7 +101,7 @@ class RRDGraph:
         # for each agent/monitor
         for rrd_temp in rrds:
             rrd_file = [rrd_temp[0], "rra_data/" + md5((str(rrd_temp[1]) + "-" + str(rrd_temp[2])).encode()).hexdigest() + ".rrd"]
-            if Path(rrd_file[1]).is_file():
+            if FSPath(rrd_file[1]).is_file():
                 rrd_files.append(rrd_file)
 
         if rrd_files:
@@ -181,7 +181,7 @@ class RRDGraph:
             png_output = "data:image/png;base64, "
             with open(png_file, "rb") as image_file:
                 png_output += b64encode(image_file.read()).decode('UTF-8')
-            Path(png_file).unlink()
+            FSPath(png_file).unlink()
             
             return png_output
 
@@ -193,7 +193,7 @@ class RRDGraph:
         # for each agent/monitor
         for rrd_temp in rrds:
             rrd_file = [rrd_temp[0], "rra_data/" + md5((str(rrd_temp[1]) + "-" + str(rrd_temp[2])).encode()).hexdigest() + ".rrd"]
-            if Path(rrd_file[1]).is_file():
+            if FSPath(rrd_file[1]).is_file():
                 rrd_files.append(rrd_file)
 
         #rrd_files.append("rra_data/" + md5((str(rrds[0]) + "-" + str(rrds[1])).encode()).hexdigest() + ".rrd")
@@ -311,7 +311,7 @@ class RRDGraph:
             png_output = "data:image/png;base64, "
             with open(png_file, "rb") as image_file:
                 png_output += b64encode(image_file.read()).decode('UTF-8')
-            Path(png_file).unlink()
+            FSPath(png_file).unlink()
             
             return png_output
 
@@ -505,15 +505,16 @@ async def console_home(request: Request, db: DBDependency):
 
 @router.get("/agent/{agent_id}", response_class=HTMLResponse)
 # get agent_id from path and pass it to console_agent
-async def console_agent(request: Request, agent_id: int, db: DBDependency):
+async def console_agent(request: Request, db: DBDependency, agent_id: str = Path(..., min_length=36, max_length=36, pattern="^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}$")):
     """ Console - Monitors by Agent """
 
     # get agent from database by agent_id
     agent = db.query(Agents).filter(Agents.id == agent_id).first()
 
-    # if agent esists and is active
-    if agent and agent.is_active:
-
+    # if agent does not exist or is not active, raise HTTPException with 404 status code
+    if not agent or not agent.is_active:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"agent_id not found")
+    else:
         # create a flat list of all monitors where agent_id is equal to agent.id
         monitor_match = [item for sublist in db.query(Monitors.id).filter(Monitors.agent_id == agent.id).all() for item in sublist]
 
@@ -528,22 +529,25 @@ async def console_agent(request: Request, agent_id: int, db: DBDependency):
         # append StatReport to context
         context.update(StatReport(db, monitor_match))
 
-    return templates.TemplateResponse("stats.html", context=context)
+        return templates.TemplateResponse("stats.html", context=context)
 
 @router.get("/host/{host_id}", response_class=HTMLResponse)
-async def console_host(request: Request, host_id: int, db: DBDependency):
+async def console_host(request: Request, db: DBDependency, host_id: str = Path(..., min_length=36, max_length=36, pattern="^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}$")):
     """ Console - Monitors by Host """
 
     # get host from database by host_id
     host = db.query(Hosts).filter(Hosts.id == host_id).first()
 
-    # if agent esists and is active
-    if host and host.is_active:
 
-        # create a flat list of all monitors where agent_id is equal to agent.id
+    # if host does not exist or is not active, raise HTTPException with 404 status code
+    if not host or not host.is_active:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"host_id not found")
+    else:
+
+        # create a flat list of all monitors where host_id is equal to host.id
         monitor_match = [item for sublist in db.query(Monitors.id).filter(Monitors.host_id == host.id).all() for item in sublist]
 
-        # Create context dictionary with agent data
+        # Create context dictionary with host data
         context = {
             "request": request,
             "title": request.app.title,
@@ -554,10 +558,10 @@ async def console_host(request: Request, host_id: int, db: DBDependency):
         # append StatReport to context
         context.update(StatReport(db, monitor_match))
 
-    return templates.TemplateResponse("stats.html", context=context)
+        return templates.TemplateResponse("stats.html", context=context)
 
 @router.get("/monitor/{monitor_id}", response_class=HTMLResponse)
-async def console_monitor(request: Request, monitor_id: int, db: DBDependency):
+async def console_monitor(request: Request, db: DBDependency, monitor_id: str = Path(..., min_length=36, max_length=36, pattern="^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}$")):
     """ Console - Monitor Graphs """
     # get monitor from database by monitor_id
     monitor = db.query(Monitors).filter(Monitors.id == monitor_id).first()
