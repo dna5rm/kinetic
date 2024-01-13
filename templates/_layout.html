@@ -13,11 +13,8 @@
 
 <body>
 
-    {% include '_navbar.html' %}
-
-    {% block content %}
-
-    {% endblock %}
+{% include '_navbar.html' %}
+{% block body %} {% endblock %}
 
     <script src="{{ url_for('static', path='/js/jquery-slim.js') }}"></script>
     <script src="{{ url_for('static', path='/js/popper.js') }}"></script>

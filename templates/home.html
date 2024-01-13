@@ -1,5 +1,5 @@
-{% include '_layout.html' %}
-
+{% extends '_layout.html' %}
+{% block body %}
 <div class="container-fluid text-center">
     <h1>{{ title }} Server Console</h1>
     <p>{{ description }}</p>
@@ -52,3 +52,4 @@
         </div>
     </div>
 </div>
+{% endblock body %}

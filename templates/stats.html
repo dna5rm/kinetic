@@ -1,5 +1,5 @@
-{% include '_layout.html' %}
-
+{% extends '_layout.html' %}
+{% block body %}
 <div class="container-fluid">
     {% if request.scope.route.name -%}
     <div class="row">
@@ -106,3 +106,4 @@
     </div>
     {% endif %}{% endif %}
 </div>
+{% endblock body %}
