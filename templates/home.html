@@ -12,7 +12,7 @@
             <ul class="list-group">
                 {% for agent in agents %}
                 <li class="list-group-item{% if not responding[loop.index0] %} list-group-item-danger{% endif %}">
-                    <a href="agent/{{ agent.id }}"{% if not responding[loop.index0] %} title="{{ last_seen[loop.index0] }}" data-toggle="tooltip"{% endif %}>
+                    <a href="/console/agent/{{ agent.id }}"{% if not responding[loop.index0] %} title="Last seen {{ last_seen[loop.index0] }}" data-toggle="tooltip"{% endif %}>
                         {{ agent.name }}
                     </a>
                 </li>
