@@ -674,8 +674,9 @@ async def console_loss(request: Request, db: DBDependency):
     # get all monitors where is_active is True
     monitors = db.query(Monitors).filter(Monitors.is_active == True).all()
 
-    # create a flat list of all monitors where current_loss is not equal to 0
-    monitor_match = [item for sublist in db.query(Monitors.id).filter(Monitors.current_loss != 0).all() for item in sublist]
+    # create a flat list of all monitors where current_loss is not equal to 0 or 100
+    monitor_match = [item for sublist in db.query(Monitors.id).filter(Monitors.current_loss != 0).\
+        filter(Monitors.current_loss != 100).all() for item in sublist]
 
     # Create context dictionary with app title
     context = {

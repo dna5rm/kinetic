@@ -23,6 +23,7 @@
             {% endif %}
         </div>
     </div>
+    {% if stats|length > 0 %}
     <div class="col container-fluid shadow-lg p-3 mb-5 bg-body rounded">
         <table class="table" id="sortable">
             <thead>
@@ -97,5 +98,11 @@
             </tbody>
         </table>
     </div>
-    {% endif %}
+    {% else %}
+    <div style="height: 200px;" class="col container-fluid shadow-lg p-3 mb-5 bg-body rounded">
+        <div class=" h-100 d-flex justify-content-center align-items-center">
+            <p>No monitors found</p>
+        </div>
+    </div>
+    {% endif %}{% endif %}
 </div>
