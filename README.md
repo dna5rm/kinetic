@@ -5,12 +5,17 @@ Kinetic is a network monitoring tool
 
 ## Modules
 
-pip install fastapi
-pip install "uvicorn[standard]"
-pip install sqlalchemy
+- fastapi
+- humanize
+- jinja2
+- requests
+- rrdtool
+- scapy
+- sqlalchemy
+- uvicorn[standard]
 
-## Permission issues
+## Permission issues when using scapy
 
-If you don't have to run as root you can give Python the same capabilities as /bin/ping, by doing:
+If you don't want to run as root you can give Python to generate packets by doing:
 
 `sudo setcap cap_net_raw+ep /usr/bin/python3.11`
