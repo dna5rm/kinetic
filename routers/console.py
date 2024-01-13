@@ -578,42 +578,46 @@ async def console_monitor(request: Request, monitor_id: int, db: DBDependency):
             rrd_start = request.query_params.get("start")
             rrd_end = request.query_params.get("end")
 
-            # if start and end times are not specified, default to 1 hour
+            # if start and end times are not specified, default to 3 hours
             if not rrd_start or not rrd_end:
                 rrd_start = (datetime.now()-timedelta(hours=3)).strftime("%Y-%m-%dT%H:%M")
                 rrd_end = datetime.now().strftime("%Y-%m-%dT%H:%M")
 
-            rrds = []
-            rrds.append([host.address, agent.id, monitor.id])
+            # if rrd_start is greater than rrd_end, raise HTTPException with 400 status code
+            if datetime.strptime(rrd_start, '%Y-%m-%dT%H:%M') > datetime.strptime(rrd_end, '%Y-%m-%dT%H:%M'):
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"start time is greater than end time")
+            else:
+                rrds = []
+                rrds.append([host.address, agent.id, monitor.id])
 
-            # Create context dictionary with monitor data
-            context = {
-                "request": request,
-                "title": request.app.title,
-                "description": request.app.description,
-                "agent": agent,
-                "host": host,
-                "monitor": monitor,
-                "start": rrd_start,
-                "end": rrd_end,
-                "timezone": request.app.server_timezone,
-                "graph": {
-                    "smoke": RRDGraph.smoke(rrds,
-                                        monitor.pollcount,
-                                        monitor.pollinterval,
-                                        f"{agent.name}: {monitor.description}",
-                                        datetime.strptime(rrd_start, '%Y-%m-%dT%H:%M').strftime("%s"),
-                                        datetime.strptime(rrd_end, '%Y-%m-%dT%H:%M').strftime("%s")),
-                    "loss": RRDGraph.loss(rrds,
-                                        monitor.pollcount,
-                                        monitor.pollinterval,
-                                        f"{agent.name}: {monitor.description}",
-                                        datetime.strptime(rrd_start, '%Y-%m-%dT%H:%M').strftime("%s"),
-                                        datetime.strptime(rrd_end, '%Y-%m-%dT%H:%M').strftime("%s"))
+                # Create context dictionary with monitor data
+                context = {
+                    "request": request,
+                    "title": request.app.title,
+                    "description": request.app.description,
+                    "agent": agent,
+                    "host": host,
+                    "monitor": monitor,
+                    "start": rrd_start,
+                    "end": rrd_end,
+                    "timezone": request.app.server_timezone,
+                    "graph": {
+                        "smoke": RRDGraph.smoke(rrds,
+                                            monitor.pollcount,
+                                            monitor.pollinterval,
+                                            f"{agent.name}: {monitor.description}",
+                                            datetime.strptime(rrd_start, '%Y-%m-%dT%H:%M').strftime("%s"),
+                                            datetime.strptime(rrd_end, '%Y-%m-%dT%H:%M').strftime("%s")),
+                        "loss": RRDGraph.loss(rrds,
+                                            monitor.pollcount,
+                                            monitor.pollinterval,
+                                            f"{agent.name}: {monitor.description}",
+                                            datetime.strptime(rrd_start, '%Y-%m-%dT%H:%M').strftime("%s"),
+                                            datetime.strptime(rrd_end, '%Y-%m-%dT%H:%M').strftime("%s"))
+                    }
                 }
-            }
 
-            return templates.TemplateResponse("monitor.html", context=context)
+                return templates.TemplateResponse("monitor.html", context=context)
 
     # Default raise HTTPException with 404 status code
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"monitor_id not found")
