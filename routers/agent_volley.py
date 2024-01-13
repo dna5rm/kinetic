@@ -15,6 +15,7 @@ from starlette import status
 from models import Agents, Hosts, Monitors
 from database import SessionLocal
 from rrdtool import update, create
+from json import loads as json_loads
 
 router = APIRouter(
     prefix="/volley",
@@ -280,88 +281,99 @@ async def read_agent_job(request: Request, db: DBDependency, agent_id: str = Pat
         }
     }
 )
-async def update_agent_job(request: Request, db: DBDependency, job: JobSubmissionModel = None, agent_id: str = Path(..., min_length=36, max_length=36, pattern="^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}$")):
+async def update_agent_job(request: Request, db: DBDependency, agent_id: str = Path(..., min_length=36, max_length=36, pattern="^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}$")):
     """ Update monitor job by agent id """
 
-    # get the id from the request body. This is the monitor job id
-    job_id = job.id
-    job_results = job.results
+    try:
+        results = await request.json()
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
 
-    # Get agent address from request
-    if request.headers.get('X-Forwarded-For'):
-        agent_address = request.headers.get('X-Forwarded-For').split(',')[0]
-    else:
-        agent_address = request.client.host
+    # load json results
+    results = json_loads(results)
 
-    # Dont update agent address if localhost
-    if agent_address == "127.0.0.1":
-        agent_address = None
+    for job in results:
 
-    # Get agent from database
-    agent = db.query(Agents).filter(Agents.id == agent_id).filter(Agents.is_active == True).first()
-
-    # If agent exists
-    if agent:
-        # Update agent address if changed
-        if agent.address != agent_address:
-            agent.address = agent_address
+        # validate job input
+        try:
+            JobSubmissionModel(**job)
+        except ValueError as exc:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
         
-        # Update agent last_seen
-        agent.last_seen = datetime.now()
-        db.commit()
+        job_id = job["id"]
+        job_results = job["results"]
 
-        # Get monitor job by id
-        monitor = db.query(Monitors).filter(Monitors.id == job_id).filter(Monitors.is_active == True).first()
+        # Get agent address from request
+        if request.headers.get('X-Forwarded-For'):
+            agent_address = request.headers.get('X-Forwarded-For').split(',')[0]
+        else:
+            agent_address = request.client.host
 
-        # If monitor job exists
-        if monitor:
-            # Update monitor job results
-            latencies = jsonable_encoder(job_results)
-            valid = [x for x in latencies if isinstance(x, float)]
-            monitor.sample += 1
+        # Dont update agent address if localhost
+        if agent_address == "127.0.0.1":
+            agent_address = None
 
-            # Previous Volley Loss
-            monitor.prev_loss = monitor.current_loss
+        # Get agent from database
+        agent = db.query(Agents).filter(Agents.id == agent_id).filter(Agents.is_active == True).first()
 
-            # Current Volley Stats
-            if valid:  # Check if the list is not empty
-                monitor.current_loss = monitor.pollcount - len(valid)
-                monitor.current_median = round(sorted(valid)[len(valid) // 2], 2)
-                monitor.current_min = round(min(valid), 2)
-                monitor.current_max = round(max(valid), 2)
-                monitor.current_stddev = round((sum([((x - monitor.current_median) ** 2) for x in valid]) / len(valid)) ** 0.5, 2)
-
-                # Aveage Volley Stats
-                monitor.avg_median = round(((monitor.avg_median * (monitor.sample - 1)) + monitor.current_median) / monitor.sample, 2)
-                monitor.avg_min = round(((monitor.avg_min * (monitor.sample - 1)) + monitor.current_min) / monitor.sample, 2)
-                monitor.avg_max = round(((monitor.avg_max * (monitor.sample - 1)) + monitor.current_max) / monitor.sample, 2)
-                monitor.avg_stddev = round(((monitor.avg_stddev * (monitor.sample - 1)) + monitor.current_stddev) / monitor.sample, 2)
-            else:
-                monitor.current_loss = monitor.pollcount
+        # If agent exists
+        if agent:
+            # Update agent address if changed
+            if agent.address != agent_address:
+                agent.address = agent_address
             
-            # Always update average loss
-            monitor.avg_loss = round(((monitor.avg_loss * (monitor.sample - 1)) + monitor.current_loss) / monitor.sample)
-
-            # Update last_change if host goes down from up
-            if monitor.current_loss == monitor.pollcount and monitor.prev_loss != monitor.pollcount:
-                monitor.last_change = datetime.now()
-            # Update last_change if host goes up from down
-            elif monitor.current_loss != monitor.pollcount and monitor.prev_loss == monitor.pollcount:
-                monitor.last_change = datetime.now()
-
-            # Update monitor job last_update
-            monitor.last_update = datetime.now()
-            monitor.results = jsonable_encoder(job_results)
-
-            # Commit changes to database
+            # Update agent last_seen
+            agent.last_seen = datetime.now()
             db.commit()
 
-            # run RRHandler
-            RRDHandler(agent_id=agent.id, monitor_id=monitor.id, step=monitor.pollinterval, results=job_results)
-            
-        else:
-            # Monitor job not found
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+            # Get monitor job by id
+            monitor = db.query(Monitors).filter(Monitors.id == job_id).filter(Monitors.is_active == True).first()
+
+            # If monitor job exists
+            if monitor:
+                # Update monitor job results
+                latencies = jsonable_encoder(job_results)
+                valid = [x for x in latencies if isinstance(x, float)]
+                monitor.sample += 1
+
+                # Previous Volley Loss
+                monitor.prev_loss = monitor.current_loss
+
+                # Current Volley Stats
+                if valid:  # Check if the list is not empty
+                    monitor.current_loss = monitor.pollcount - len(valid)
+                    monitor.current_median = round(sorted(valid)[len(valid) // 2], 2)
+                    monitor.current_min = round(min(valid), 2)
+                    monitor.current_max = round(max(valid), 2)
+                    monitor.current_stddev = round((sum([((x - monitor.current_median) ** 2) for x in valid]) / len(valid)) ** 0.5, 2)
+
+                    # Aveage Volley Stats
+                    monitor.avg_median = round(((monitor.avg_median * (monitor.sample - 1)) + monitor.current_median) / monitor.sample, 2)
+                    monitor.avg_min = round(((monitor.avg_min * (monitor.sample - 1)) + monitor.current_min) / monitor.sample, 2)
+                    monitor.avg_max = round(((monitor.avg_max * (monitor.sample - 1)) + monitor.current_max) / monitor.sample, 2)
+                    monitor.avg_stddev = round(((monitor.avg_stddev * (monitor.sample - 1)) + monitor.current_stddev) / monitor.sample, 2)
+                else:
+                    monitor.current_loss = monitor.pollcount
+                
+                # Always update average loss
+                monitor.avg_loss = round(((monitor.avg_loss * (monitor.sample - 1)) + monitor.current_loss) / monitor.sample)
+
+                # Update last_change if host goes down from up
+                if monitor.current_loss == monitor.pollcount and monitor.prev_loss != monitor.pollcount:
+                    monitor.last_change = datetime.now()
+                # Update last_change if host goes up from down
+                elif monitor.current_loss != monitor.pollcount and monitor.prev_loss == monitor.pollcount:
+                    monitor.last_change = datetime.now()
+
+                # Update monitor job last_update
+                monitor.last_update = datetime.now()
+                monitor.results = jsonable_encoder(job_results)
+
+                # Commit changes to database
+                db.commit()
+
+                # run RRHandler
+                RRDHandler(agent_id=agent.id, monitor_id=monitor.id, step=monitor.pollinterval, results=job_results)
 
     # Return success
     return { "status": "success" }

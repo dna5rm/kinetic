@@ -2,15 +2,18 @@
 This script will send a volley of packets to a host and return the average latency and loss
 """
 
+from uuid import UUID
 from pydantic import BaseModel, Field, field_validator, IPvAnyAddress, ValidationError
 from scapy.all import sr1, IP, IPv6, ICMP, ICMPv6EchoRequest, TCP
 from json import dumps as json_dumps, loads as json_loads
+from os import environ
+import requests
 import asyncio
 import time
-import logging                                                                                                    
-import requests
+import logging
 
-# disable scapy warnings
+# Set the logging formatting
+logging.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s',level=logging.INFO)
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 
 class ReadJobInput(BaseModel):
@@ -242,49 +245,97 @@ class volley(BaseModel):
 
         return latencies
 
-if __name__ == '__main__':
-    #print(volley(ip="172.31.4.129", protocol="tcp", port=22, dscp="EF"))
-    #print(volley(ip="172.31.4.129", volley=20, dscp="EF"))
+def collect_volley_jobs(agent_id: UUID, server: str):
+    """ Collect volley jobs """
 
-    #print(volley.ICMP("172.31.4.129", 20, 0xE0))
-    #print(volley.TCP("172.31.4.129", 5, 22, 0xE0))
-    #print(int(0xE0))
-
+    DEF_START_TIME = time.time()
 
     # http request against server
     try:
-        jobs = requests.get("http://127.0.0.1:8080/volley/57897bec-ccec-4a6d-a973-7d2c26f21192", headers={"Content-Type": "application/json"})
+        jobs = requests.get(f"{server}/volley/{agent_id}", headers={"Content-Type": "application/json"})
     except requests.exceptions.ConnectionError as e:
         print("Connection Error:", e)
+
+    logging.info(f"collect_volley_jobs: {round(time.time() - DEF_START_TIME, 2)}")
+
+    return jobs.json()
+
+def execute_volley_job(job: dict):
+    """ Execute a volley job and return the results """
+
+    # If job is not empty, execute the job and return the results
+    if job:
+        DEF_START_TIME = time.time()
+
+        # Validate the job input
+        try:
+            ReadJobInput(**job)
+        except ValidationError as e:
+            print(e.json())
+            quit()
+
+        # Run the volley function and return the results as data
+        data = volley(ip=job['address'], protocol=job['protocol'], port=job['port'], volley=job['pollcount'], dscp=job['dscp'])
+        data = json_loads(str(data))
+
+        submit = {
+            "id": job['id'],
+            "results": data['results']
+        }
+
+        logging.info(f"{job['id']}: {round(time.time() - DEF_START_TIME, 2)}")
+        return submit
+    return None
+
+def submit_volley_result(agent_id: UUID, server: str, results: dict):
+    """ Submit volley results and return the status code """
+
+    DEF_START_TIME = time.time()
+
+    # send results back to the server as a put request
+    try:
+        requests.put(f"{server}/volley/{agent_id}", headers={"Content-Type": "application/json"}, data=json_dumps(results))
+    except requests.exceptions.ConnectionError as e:
+        print("Connection Error:", e)
+
+    logging.info(f"submit_volley_result: {round(time.time() - JOBS_START_TIME, 2)}")
+
+    return requests.status_codes
+
+if __name__ == '__main__':
+
+    # Get the agent id and server from the environment
+    try:
+        agent_id = environ['KINETIC_AGENT_ID']
+        server = environ['KINETIC_SERVER']
+    except KeyError as e:
+        print("KINETIC_AGENT_ID and KINETIC_SERVER must be set!")
         quit()
 
-    # loop through each job and print the results
+    START_TIME = time.time()
+    # Print the agent id and human readable start time
+    logging.info("==============================================")
+    logging.info(f"  AGENT {agent_id}  ")
+    logging.info("==============================================")
+
+    # Collect jobs from the server.
+    jobs = collect_volley_jobs(agent_id, server)
+
+    # Create a list to store the job results
+    job_results = []
+
+    # Execute the jobs
     if jobs:
-        for job in jobs.json():
+        JOBS_START_TIME = time.time()
+        for job in jobs:
+            job_results.append(execute_volley_job(job))
+        logging.info(f"execute_volley_job: {round(time.time() - JOBS_START_TIME, 2)}")
 
-            # validate job against model and quit if invalid
-            try:
-                ReadJobInput(**job)
-            except ValidationError as e:
-                print(e.json())
-                quit()
+    # Submit the job results if there are any
+    if job_results and len(job_results) > 0:
+        submit_volley_result(agent_id, server, json_dumps(job_results))
 
-            # run a volley against the job and store the results
-            data = volley(ip=job['address'], protocol=job['protocol'], port=job['port'], volley=job['pollcount'], dscp=job['dscp'])
-            data = json_loads(str(data))
-            
-            submit = {
-                "id": job['id'],
-                "results": data['results']
-            }
-
-            # send results back to the server as a put request
-            try:
-                requests.put("http://127.0.0.1:8080/volley/57897bec-ccec-4a6d-a973-7d2c26f21192", headers={"Content-Type": "application/json"}, data=json_dumps(submit))
-            except requests.exceptions.ConnectionError as e:
-                print("Connection Error:", e)
-                quit()
-
-            print(json_dumps(submit))
-    else:
-        print("No jobs found")
+    # Total time to execute all jobs
+    logging.info("==============================================")
+    logging.info(f"__main__: {round(time.time() - START_TIME, 2)}")
+    logging.info("==============================================")
