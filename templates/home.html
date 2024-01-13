@@ -9,9 +9,13 @@
     <div class="row">
         <div class="col-2 bg-light">
             <h3>Agents</h3>
-            <ul>
+            <ul class="list-group">
                 {% for agent in agents %}
-                <li><a href="agent/{{ agent.id }}">{{ agent.name }}</a></li>
+                <li class="list-group-item{% if not responding[loop.index0] %} list-group-item-danger{% endif %}">
+                    <a href="agent/{{ agent.id }}"{% if not responding[loop.index0] %} title="{{ last_seen[loop.index0] }}" data-toggle="tooltip"{% endif %}>
+                        {{ agent.name }}
+                    </a>
+                </li>
                 {% endfor %}
         </div>
         <div class="col">

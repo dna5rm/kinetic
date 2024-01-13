@@ -476,12 +476,18 @@ async def console_home(request: Request, db: DBDependency):
     # get a list of all agents where is_active is True
     agents = db.query(Agents).filter(Agents.is_active == True).all()
 
+    # create responding bolean list of all agents wether they have responded in the last 15 minutes
+    responding = [agent.last_seen > (datetime.now() - timedelta(minutes=15)) for agent in agents]
+    last_seen = [naturaltime(agent.last_seen) for agent in agents]
+
     # Create context dictionary with app title
     context = {
         "request": request,
         "title": request.app.title,
         "description": request.app.description,
         "agents": agents,
+        "responding": responding,
+        "last_seen": last_seen,
         "stats": {
             "active_agents": len(agents),
             "active_hosts": db.query(Hosts).filter(Hosts.is_active == True).count(),
