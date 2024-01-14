@@ -15,6 +15,7 @@ import logging
 # Set the logging formatting
 logging.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s',level=logging.INFO)
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
+logging.disable(logging.DEBUG)
 
 class ReadJobInput(BaseModel):
     id: str = Field(..., pattern="^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$", description="Monitor by id")
