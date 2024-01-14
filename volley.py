@@ -7,8 +7,8 @@ from pydantic import BaseModel, Field, field_validator, IPvAnyAddress, Validatio
 from scapy.all import sr1, IP, IPv6, ICMP, ICMPv6EchoRequest, TCP
 from json import dumps as json_dumps, loads as json_loads
 from os import environ
+import concurrent.futures
 import requests
-import asyncio
 import time
 import logging
 
@@ -324,11 +324,17 @@ if __name__ == '__main__':
     # Create a list to store the job results
     job_results = []
 
-    # Execute the jobs
+    # If there are jobs, execute them
     if jobs:
         JOBS_START_TIME = time.time()
-        for job in jobs:
-            job_results.append(execute_volley_job(job))
+
+        # Execute the jobs with a thread pool
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            job_results = list(executor.map(execute_volley_job, jobs))
+
+        # # Execute each of the jobs in serial
+        # job_results = [execute_volley_job(job) for job in jobs]
+
         logging.info(f"execute_volley_job: {round(time.time() - JOBS_START_TIME, 2)}")
 
     # Submit the job results if there are any
