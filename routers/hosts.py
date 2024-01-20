@@ -192,3 +192,19 @@ async def delete_host_id(db: DBDependency, host_id: str = Path(..., min_length=3
 
     # Return 204 if monitor deleted
     return {"detail": "No Content"}
+
+@router.get("/address/{address}", status_code=status.HTTP_200_OK, summary="Get a single host by address")
+async def read_host_address(db: DBDependency, address: str = Path(..., min_length=7, max_length=45)):
+    """ Get host by address """
+
+    # raise an error if address fails IPvAnyAddress validation
+    try:
+        IPvAnyAddress(address)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid IP address") from exc
+    
+    # Check if host already exists from post data
+    host = db.query(Hosts).filter(Hosts.address == address).first()
+    if not host:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    return host

@@ -1,13 +1,13 @@
 """ Kinetic - Network Monitoring Tool """
 
 import uvicorn
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi import Depends, FastAPI, HTTPException
+from fastapi.responses import FileResponse
 from database import engine
 import models
-from routers import agent_volley, agents, hosts, monitors, console
+from routers import agents, hosts, monitors, console, volley, env
 from starlette.staticfiles import StaticFiles
-from datetime import datetime, tzinfo
+from datetime import datetime
 
 # Create FastAPI instance
 app = FastAPI(
@@ -22,11 +22,15 @@ app = FastAPI(
 # Load SQLAlchemy mapper from models
 models.Base.metadata.create_all(bind=engine)
 
+# Static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Set server start time in app
 app.server_start_time = datetime.now()
 app.server_timezone = datetime.now().astimezone().tzinfo
+
+# Kinetic Environment Operations
+app.include_router(env.router)
 
 # Basic CRUD operations
 app.include_router(agents.router)
@@ -34,7 +38,7 @@ app.include_router(hosts.router)
 app.include_router(monitors.router)
 
 # Agent job operations
-app.include_router(agent_volley.router)
+app.include_router(volley.router)
 
 # App UI operations pass server_start_time to console.router
 app.include_router(console.router)

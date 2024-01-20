@@ -11,9 +11,8 @@ class Env(Base):
     """ Environment Table """
     __tablename__ = "env"
 
-    id          = Column(Integer, primary_key=True, index=True)
-    key         = Column(String, unique=True, index=True, nullable=False)
-    value       = Column(String, index=True, default="")    
+    key         = Column(String, primary_key=True, index=True, nullable=False)
+    value       = Column(String, index=True, default="", nullable=True)
 
 # Define the Agents model
 class Agents(Base):

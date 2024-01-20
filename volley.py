@@ -1,5 +1,8 @@
 """
 This script will send a volley of packets to a host and return the average latency and loss
+
+If Running from CLI:
+$ watch KINETIC_AGENT_ID=<AGENT UUID> KINETIC_SERVER=<SERVER URL> timeout 90 python volley.py
 """
 
 from uuid import UUID
@@ -16,6 +19,18 @@ import logging
 logging.basicConfig(format='%(asctime)s - %(levelname)s: %(message)s',level=logging.INFO)
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 #logging.disable(logging.DEBUG)
+
+# Define TOS hex mapping of DSCP names
+dscp_name_map = {
+    "CS0": 0x00, "BE": 0x00,
+    "CS1": 0x20, "AF11": 0x28, "AF12": 0x30, "AF13": 0x38,
+    "CS2": 0x40, "AF21": 0x48, "AF22": 0x50, "AF23": 0x58,
+    "CS3": 0x60, "AF31": 0x68, "AF32": 0x70, "AF33": 0x78,
+    "CS4": 0x80, "AF41": 0x88, "AF42": 0x90, "AF43": 0x98,
+    "CS5": 0xA0, "EF": 0xB8,
+    "CS6": 0xC0,
+    "CS7": 0xE0
+} #dscp_name_map[key]
 
 class ReadJobInput(BaseModel):
     id: str = Field(..., pattern="^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$", description="Monitor by id")
@@ -44,18 +59,6 @@ class ReadJobInput(BaseModel):
     @field_validator('dscp')
     def validate_tos(cls, v):
         """ DSCP validation """
-
-        # Define TOS hex mapping of DSCP names
-        dscp_name_map = {
-            "CS0": 0x00, "BE": 0x00,
-            "CS1": 0x20, "AF11": 0x28, "AF12": 0x30, "AF13": 0x38,
-            "CS2": 0x40, "AF21": 0x48, "AF22": 0x50, "AF23": 0x58,
-            "CS3": 0x60, "AF31": 0x68, "AF32": 0x70, "AF33": 0x78,
-            "CS4": 0x80, "AF41": 0x88, "AF42": 0x90, "AF43": 0x98,
-            "CS5": 0xA0, "EF": 0xB8,
-            "CS6": 0xC0,
-            "CS7": 0xE0
-        } #dscp_name_map[key]
 
         # if input is a string, convert to upper case and check if it is in the map
         if isinstance(v, str):
@@ -105,18 +108,6 @@ class volley(BaseModel):
     @field_validator('dscp')
     def validate_tos(cls, v):
         """ Convert to TOS value """
-
-        # Define TOS hex mapping of DSCP names
-        dscp_name_map = {
-            "CS0": 0x00, "BE": 0x00,
-            "CS1": 0x20, "AF11": 0x28, "AF12": 0x30, "AF13": 0x38,
-            "CS2": 0x40, "AF21": 0x48, "AF22": 0x50, "AF23": 0x58,
-            "CS3": 0x60, "AF31": 0x68, "AF32": 0x70, "AF33": 0x78,
-            "CS4": 0x80, "AF41": 0x88, "AF42": 0x90, "AF43": 0x98,
-            "CS5": 0xA0, "EF": 0xB8,
-            "CS6": 0xC0,
-            "CS7": 0xE0
-        } #dscp_name_map[key]
 
         # if input is a string, convert to upper case and check if it is in the map
         if isinstance(v, str):
@@ -253,7 +244,7 @@ def collect_volley_jobs(agent_id: UUID, server: str):
 
     # http request against server
     try:
-        jobs = requests.get(f"{server}/volley/{agent_id}", headers={"Content-Type": "application/json"})
+        jobs = requests.get(f"{server}/volley/{agent_id}", timeout=30, headers={"Content-Type": "application/json"})
     except requests.exceptions.ConnectionError as e:
         print("Connection Error:", e)
 
@@ -295,7 +286,7 @@ def submit_volley_result(agent_id: UUID, server: str, results: dict):
 
     # send results back to the server as a put request
     try:
-        requests.put(f"{server}/volley/{agent_id}", headers={"Content-Type": "application/json"}, data=json_dumps(results))
+        requests.put(f"{server}/volley/{agent_id}", timeout=30, headers={"Content-Type": "application/json"}, data=json_dumps(results))
     except requests.exceptions.ConnectionError as e:
         print("Connection Error:", e)
 

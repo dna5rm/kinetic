@@ -11,10 +11,10 @@
         </defs>
         <g transform="translate(10,20)">
           <rect rx="10" ry="10" width="150" height="40" stroke="#000" stroke-width="3" fill="#fff" opacity="0.5"></rect>
-          <a style="color:black; text-decoration: none;" href="../agent/{{ agent.id }}">
+          <a data-toggle="tooltip" style="color:black; text-decoration: none;" href="../agent/{{ agent.id }}" title="{{ agent.address }}">
             <text x="75" y="20" alignment-baseline="middle" font-family="monospace" font-size="16" fill="blue"
               stroke-width="0" stroke="#000" text-anchor="middle">
-                {% if agent.address is none %}{{ agent.name }}{% else %}{{ agent.address }}{% endif %}
+                {{ agent.name }}
             </text>
           </a>
         </g>
@@ -30,7 +30,7 @@
         </g>
         <g transform="translate(480,20)">
           <rect rx="10" ry="10" width="150" height="40" stroke="#000" stroke-width="3" fill="#fff" opacity="0.5"></rect>
-          <a style="color:black; text-decoration: none;" href="/console/host/{{ host.id }}">
+          <a data-toggle="tooltip" style="color:black; text-decoration: none;" href="/console/host/{{ host.id }}" title="{{ host.description }}">
           <text x="75" y="20" alignment-baseline="middle" font-family="monospace" font-size="16" fill="blue"
             stroke-width="0" stroke="#000" text-anchor="middle">{{ host.address }}</text>
           </a>

@@ -6,11 +6,11 @@ Kinetic contains multiple router files located in the `kinetic/routers` director
 
 ## File List
 
-- agent_volley.py: Job handling for volley agents.
-- agents.py: CRUD operations for agents db table
-- console.py: Server Console
-- hosts.py: CRUD operations for hosts db table
-- monitors.py: CRUD operations for monitors db table
+- routers/agents.py: CRUD operations for agents db table
+- routers/console.py: Server Console
+- routers/hosts.py: CRUD operations for hosts db table
+- routers/monitors.py: CRUD operations for monitors db table
+- routers/volley.py: Job handling for volley agents.
 
 ## Usage
 

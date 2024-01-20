@@ -22,32 +22,38 @@
             <h3>Server Statistics</h3>
             <p>Uptime is {{ stats.server_run_time }}.</p>
 
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th scope="col" style="width: 100px;">&nbsp;</th>
-                        <th scope="col" style="width: 100px;">Active</th>
-                        <th scope="col" style="width: 100px;">Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Agents</td>
-                        <td>{{ stats.active_agents }}</td>
-                        <td>{{ stats.total_agents }}</td>
-                    </tr>
-                    <tr>
-                        <td>Hosts</td>
-                        <td>{{ stats.active_hosts }}</td>
-                        <td>{{ stats.total_hosts }}</td>
-                    </tr>
-                    <tr>
-                        <td>Monitors</td>
-                        <td>{{ stats.active_monitors }}</td>
-                        <td>{{ stats.total_monitors }}</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="col">
+                <table class="table table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th scope="col">&nbsp;</th>
+                            <th scope="col" class="text-center">Active</th>
+                            <th scope="col" class="text-center">Disabled</th>
+                            <th scope="col" class="text-center">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Agents</td>
+                            <td class="text-center">{{ stats.active_agents }}</td>
+                            <td class="text-center">{{ stats.disabled_agents }}</td>
+                            <td class="text-center">{{ stats.total_agents }}</td>
+                        </tr>
+                        <tr>
+                            <td>Hosts</td>
+                            <td class="text-center">{{ stats.active_hosts }}</td>
+                            <td class="text-center">{{ stats.disabled_hosts }}</td>
+                            <td class="text-center">{{ stats.total_hosts }}</td>
+                        </tr>
+                        <tr>
+                            <td>Monitors</td>
+                            <td class="text-center">{{ stats.active_monitors }}</td>
+                            <td class="text-center">{{ stats.disabled_monitors }}</td>
+                            <td class="text-center">{{ stats.total_monitors }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
         </div>
     </div>

@@ -1,6 +1,6 @@
 {% extends '_layout.html' %}
 {% block body %}
-<div class="container-fluid">
+<div class="container-fluid" style="width: 99%;">
     {% if request.scope.route.name -%}
     <div class="row">
         <div class="col">
@@ -25,7 +25,7 @@
     </div>
     {% if stats|length > 0 %}
     <div class="col container-fluid shadow-lg p-3 mb-5 bg-body rounded">
-        <table class="table" id="sortable">
+        <table class="table table-striped">
             <thead>
                 <tr>
                     {% if request.scope.route.name != 'console_agent' and request.scope.route.name != 'console_host' -%}
@@ -34,7 +34,9 @@
                     <th colspan="3" class="text-center" scope="col"></th>
                     {%- endif %}
                     <th colspan="2" class="table-primary text-center" scope="col">Current</th>
+                    {% if request.scope.route.name != 'console_agent' -%}
                     <th colspan="5" class="table-secondary text-center" scope="col">Average</th>
+                    {% endif -%}
                     <th colspan="1" class="text-center" scope="col"></th>
                 </tr>
                 <tr>
@@ -44,11 +46,13 @@
                     <th class="text-center" scope="col">Protocol</th>
                     <th class="table-primary text-center" scope="col">Median</th>
                     <th class="table-primary text-center" scope="col">Loss</th>
+                    {% if request.scope.route.name != 'console_agent' -%}
                     <th class="table-secondary text-center" scope="col">Median</th>
                     <th class="table-secondary text-center" scope="col">Minimum</th>
                     <th class="table-secondary text-center" scope="col">Maximum</th>
                     <th class="table-secondary text-center" scope="col">Std Dev</th>
                     <th class="table-secondary text-center" scope="col">Loss</th>
+                    {% endif -%}
                     <th class="text-center" scope="col">Up/Down</th>
                 </tr>
             </thead>
@@ -75,6 +79,7 @@
                     <td class="table-primary text-center">
                         <span class="badge {{ stat.current_loss_color }}" data-toggle="tooltip">{{ stat.current_loss }}%</span>
                     </td>
+                    {% if request.scope.route.name != 'console_agent' -%}
                     <td class="table-secondary text-center">
                         <span class="badge {{ stat.average_median_color }}" data-toggle="tooltip">{{ stat.average_median }}</span>
                     </td>
@@ -90,6 +95,7 @@
                     <td class="table-secondary text-center">
                         <span class="badge {{ stat.average_loss_color }}" data-toggle="tooltip">{{ stat.average_loss }}%</span>
                     </td>
+                    {% endif -%}
                     <td class="text-center">
                         <span title="Last Updated: {{ stat.last_update }}" data-toggle="tooltip">{{ stat.last_change }}</span>
                     </td>

@@ -183,3 +183,11 @@ async def delete_agent_id(db: DBDependency, agent_id: str = Path(..., min_length
 
     # Return 204 if monitor deleted
     return {"detail": "No Content"}
+
+@router.get("/name/{agent_name}", status_code=status.HTTP_200_OK, summary="Get a single agent by name")
+async def read_agent_name(db: DBDependency, agent_name: str = Path(..., min_length=4, max_length=16)):
+    """ Get agent by name """
+    agent = db.query(Agents).filter(Agents.name == agent_name).first()
+    if not agent:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Agent not found")
+    return agent            

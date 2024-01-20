@@ -489,9 +489,14 @@ async def console_home(request: Request, db: DBDependency):
         "responding": responding,
         "last_seen": last_seen,
         "stats": {
-            "active_agents": len(agents),
+            "active_agents": db.query(Agents).filter(Agents.is_active == True).count(),
             "active_hosts": db.query(Hosts).filter(Hosts.is_active == True).count(),
-            "active_monitors": db.query(Monitors).filter(Monitors.is_active == True).count(),
+            "active_monitors": db.query(Monitors).filter(Monitors.is_active == True).\
+                filter(Monitors.agent_id == Agents.id).filter(Agents.is_active == True).\
+                filter(Monitors.host_id == Hosts.id).filter(Hosts.is_active == True).count(),
+            "disabled_agents": db.query(Agents).filter(Agents.is_active == False).count(),
+            "disabled_hosts": db.query(Hosts).filter(Hosts.is_active == False).count(),
+            "disabled_monitors": db.query(Monitors).filter(Monitors.is_active == False).count(),
             "total_agents": db.query(Agents).count(),
             "total_hosts": db.query(Hosts).count(),
             "total_monitors": db.query(Monitors).count(),

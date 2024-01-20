@@ -1,5 +1,5 @@
 """
-Kinetic - Operations for monitor jobs
+Kinetic - Operations for monitor jobs + reporting
 """
 
 from os import path, makedirs
@@ -10,9 +10,10 @@ from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, HTTPException, Path, Request
 from fastapi.responses import PlainTextResponse
+from fastapi.templating import Jinja2Templates
 from fastapi.encoders import jsonable_encoder
 from starlette import status
-from models import Agents, Hosts, Monitors
+from models import Agents, Hosts, Monitors, Env
 from database import SessionLocal
 from rrdtool import update, create
 from json import loads as json_loads
@@ -176,6 +177,24 @@ class RRDHandler(BaseModel):
 
         # update RRD file
         update(rrd)
+
+
+@router.get("/test", include_in_schema=False)
+async def test(request: Request, db: DBDependency):
+    """ Test page - Generate Email Report """
+
+    # get all monitors where is_active is True
+    monitors = db.query(Monitors).filter(Monitors.is_active == True).all()
+
+    # Create context dictionary with app title
+    context = {
+        "request": request,
+        "title": request.app.title,
+        "description": request.app.description,
+        "monitors": monitors
+    }
+
+    return Jinja2Templates(directory=".").TemplateResponse("test.html", context=context)
 
 @router.get("/", status_code=status.HTTP_200_OK)
 async def volley_script():
