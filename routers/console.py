@@ -165,15 +165,15 @@ class RRDGraph:
                 rrd_graph_str.append(f"DEF:loss{rrd_idx}={rrd_file[1]}:loss:LAST")
                 rrd_graph_str.append(f"CDEF:ploss{rrd_idx}=loss{rrd_idx},{polls},/,100,*")
                 rrd_graph_str.append(f"LINE2:ploss{rrd_idx}{rrd_color}:{rrd_file[0]}\t")
-                rrd_graph_str.append(f"GPRINT:ploss{rrd_idx}:LAST:Current Loss\: %5.1lf%%\\j")
+                rrd_graph_str.append(f"GPRINT:ploss{rrd_idx}:LAST:Current Loss\\: %5.1lf%%\\j")
 
             # Done Add footer w/date & time.
             # naturaldelta between start and end epoch times
             timestart = datetime.fromtimestamp(int(start_time)).strftime("%Y-%m-%d")
             timerange = naturaldelta(datetime.fromtimestamp(int(end_time)) - datetime.fromtimestamp(int(start_time)))
 
-            rrd_graph_str.append(f"COMMENT:Date\: {timestart} ({timerange})")
-            rrd_graph_str.append(f"COMMENT:Probe\: {polls}x/{step}sec interval\\j")
+            rrd_graph_str.append(f"COMMENT:Date\\: {timestart} ({timerange})")
+            rrd_graph_str.append(f"COMMENT:Probe\\: {polls}x/{step}sec interval\\j")
 
             #print("### rrd_graph_str ###\n", rrd_graph_str)
             
@@ -292,18 +292,18 @@ class RRDGraph:
                 rrd_graph_str.append(f"VDEF:avsd{rrd_idx}=sdev{rrd_idx},AVERAGE")
                 rrd_graph_str.append(f"CDEF:msr{rrd_idx}=median{rrd_idx},POP,avmed{rrd_idx},avsd{rrd_idx},/")
                 rrd_graph_str.append(f"VDEF:avmsr{rrd_idx}=msr{rrd_idx},AVERAGE")
-                rrd_graph_str.append(f"GPRINT:avmed{rrd_idx}:Median RTT\: %5.2lfms")
-                rrd_graph_str.append(f"GPRINT:ploss{rrd_idx}:AVERAGE:Loss\: %5.1lf%%")
-                rrd_graph_str.append(f"GPRINT:avsd{rrd_idx}:Std Dev\: %5.2lfms")
-                rrd_graph_str.append(f"GPRINT:avmsr{rrd_idx}:Ratio\: %5.1lfms\\j")
+                rrd_graph_str.append(f"GPRINT:avmed{rrd_idx}:Median RTT\\: %5.2lfms ")
+                rrd_graph_str.append(f"GPRINT:ploss{rrd_idx}:AVERAGE:Loss\\: %5.1lf%% ")
+                rrd_graph_str.append(f"GPRINT:avsd{rrd_idx}:Std Dev\\: %5.2lfms ")
+                rrd_graph_str.append(f"GPRINT:avmsr{rrd_idx}:Ratio\\: %5.1lfms\\j")
 
             # Done Add footer w/date & time.
             # naturaldelta between start and end epoch times
             timestart = datetime.fromtimestamp(int(start_time)).strftime("%Y-%m-%d")
             timerange = naturaldelta(datetime.fromtimestamp(int(end_time)) - datetime.fromtimestamp(int(start_time)))
 
-            rrd_graph_str.append(f"COMMENT:Date\: {timestart} ({timerange})")
-            rrd_graph_str.append(f"COMMENT:Probe\: {polls}x/{step}sec interval\\j")
+            rrd_graph_str.append(f"COMMENT:Date\\: {timestart} ({timerange})")
+            rrd_graph_str.append(f"COMMENT:Probe\\: {polls}x/{step}sec interval\\j")
 
             #print("### rrd_graph_str ###\n", rrd_graph_str)
             
