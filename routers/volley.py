@@ -17,6 +17,7 @@ from models import Agents, Hosts, Monitors, Env
 from database import SessionLocal
 from rrdtool import update, create
 from json import loads as json_loads
+from humanize import naturaldelta, naturaltime
 
 router = APIRouter(
     prefix="/volley",
@@ -178,13 +179,16 @@ class RRDHandler(BaseModel):
         # update RRD file
         update(rrd)
 
-
 @router.get("/test", include_in_schema=False)
 async def test(request: Request, db: DBDependency):
     """ Test page - Generate Email Report """
 
-    # get all monitors where is_active is True
+    # Get all monitors
     monitors = db.query(Monitors).filter(Monitors.is_active == True).all()
+
+    # create a flat list of all monitors that both current_loss and prev_loss are both equal to pollcount
+    monitors_down = [item for sublist in db.query(Monitors.id).filter(Monitors.current_loss == Monitors.pollcount).\
+        filter(Monitors.prev_loss == Monitors.pollcount).all() for item in sublist]
 
     # Create context dictionary with app title
     context = {
