@@ -292,7 +292,7 @@ class RRDGraph:
                 rrd_graph_str.append(f"VDEF:avsd{rrd_idx}=sdev{rrd_idx},AVERAGE")
                 rrd_graph_str.append(f"CDEF:msr{rrd_idx}=median{rrd_idx},POP,avmed{rrd_idx},avsd{rrd_idx},/")
                 rrd_graph_str.append(f"VDEF:avmsr{rrd_idx}=msr{rrd_idx},AVERAGE")
-                rrd_graph_str.append(f"GPRINT:avmed{rrd_idx}:Median RTT\\: %5.2lfms ")
+                rrd_graph_str.append(f"GPRINT:avmed{rrd_idx}:RTT\\: %5.2lfms ")
                 rrd_graph_str.append(f"GPRINT:ploss{rrd_idx}:AVERAGE:Loss\\: %5.1lf%% ")
                 rrd_graph_str.append(f"GPRINT:avsd{rrd_idx}:Std Dev\\: %5.2lfms ")
                 rrd_graph_str.append(f"GPRINT:avmsr{rrd_idx}:Ratio\\: %5.1lfms\\j")

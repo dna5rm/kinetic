@@ -3,18 +3,7 @@
 
 Kinetic is a network monitoring tool
 
-## Modules
-
-- fastapi
-- humanize
-- jinja2
-- requests
-- rrdtool
-- scapy
-- sqlalchemy
-- uvicorn[standard]
-
-## Permission issues when using scapy
+## Permission issues when using scapy as a non-root user
 
 If you don't want to run as root you can give Python to generate packets by doing:
 

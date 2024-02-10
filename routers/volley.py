@@ -34,6 +34,7 @@ def get_db():
         db.close()
 
 DBDependency = Annotated[Session, Depends(get_db)]
+templates = Jinja2Templates(directory="templates")
 
 # JobSubmissionModel for submitting job results
 class JobSubmissionModel(BaseModel):
@@ -179,8 +180,8 @@ class RRDHandler(BaseModel):
         # update RRD file
         update(rrd)
 
-@router.get("/test", include_in_schema=False)
-async def test(request: Request, db: DBDependency):
+@router.get("/down", include_in_schema=False)
+async def down(request: Request, db: DBDependency):
     """ Test page - Generate Email Report """
 
     # Get all monitors
@@ -198,7 +199,7 @@ async def test(request: Request, db: DBDependency):
         "monitors": monitors
     }
 
-    return Jinja2Templates(directory=".").TemplateResponse("test.html", context=context)
+    return templates.TemplateResponse("volley_down.html", context=context)
 
 @router.get("/", status_code=status.HTTP_200_OK)
 async def volley_script():
