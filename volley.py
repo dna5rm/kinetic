@@ -244,7 +244,7 @@ def collect_volley_jobs(agent_id: UUID, server: str):
 
     # http request against server
     try:
-        jobs = requests.get(f"{server}/volley/{agent_id}", timeout=30, headers={"Content-Type": "application/json"})
+        jobs = requests.get(f"{server}/volley/{agent_id}", verify=False, timeout=30, headers={"Content-Type": "application/json"})
     except requests.exceptions.ConnectionError as e:
         print("Connection Error:", e)
 
@@ -286,7 +286,7 @@ def submit_volley_result(agent_id: UUID, server: str, results: dict):
 
     # send results back to the server as a put request
     try:
-        requests.put(f"{server}/volley/{agent_id}", timeout=30, headers={"Content-Type": "application/json"}, data=json_dumps(results))
+        requests.put(f"{server}/volley/{agent_id}", verify=False, timeout=30, headers={"Content-Type": "application/json"}, data=json_dumps(results))
     except requests.exceptions.ConnectionError as e:
         print("Connection Error:", e)
 
