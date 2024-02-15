@@ -382,16 +382,20 @@ async def update_agent_job(request: Request, db: DBDependency, agent_id: str = P
                 # Always update average loss
                 monitor.avg_loss = round(((monitor.avg_loss * (monitor.sample - 1)) + monitor.current_loss) / monitor.sample)
 
-                # Update last_change if host goes down from up
+                # Update last_down if host goes down from up
                 if monitor.current_loss == monitor.pollcount and monitor.prev_loss != monitor.pollcount:
-                    monitor.last_change = datetime.now()
-                # Update last_change if host goes up from down
+                    monitor.last_down = datetime.now()
+                # Update last_down if host goes up from down
                 elif monitor.current_loss != monitor.pollcount and monitor.prev_loss == monitor.pollcount:
-                    monitor.last_change = datetime.now()
+                    monitor.last_down = datetime.now()
 
                 # Update monitor job last_update
                 monitor.last_update = datetime.now()
                 monitor.results = jsonable_encoder(job_results)
+
+                # If down add pollinterval to total_down
+                if monitor.current_loss == monitor.pollcount:
+                    monitor.total_down += monitor.pollinterval
 
                 # Commit changes to database
                 db.commit()

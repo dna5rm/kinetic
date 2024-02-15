@@ -48,6 +48,45 @@
       </svg>    
     </div>
 
+    <div class="container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th class="table-secondary text-center" scope="col">Median</th>
+            <th class="table-secondary text-center" scope="col">Minimum</th>
+            <th class="table-secondary text-center" scope="col">Maximum</th>
+            <th class="table-secondary text-center" scope="col">Std Dev</th>
+            <th class="table-secondary text-center" scope="col">Loss</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="table-secondary text-center">
+              <span class="badge {{ monitor.average_median_color }}" data-toggle="tooltip">{{ monitor.avg_median }}</span>
+            </td>
+            <td class="table-secondary text-center">
+              <span class="badge {{ monitor.average_minimum_color }}" data-toggle="tooltip">{{ monitor.avg_min }}</span>
+            </td>
+            <td class="table-secondary text-center">
+              <span class="badge {{ monitor.average_maximum_color }}" data-toggle="tooltip">{{ monitor.avg_max }}</span>
+            </td>
+            <td class="table-secondary text-center">
+              <span class="badge {{ monitor.average_stddev_color }}" data-toggle="tooltip">{{ monitor.avg_stddev
+                }}</span>
+            </td>
+            <td class="table-secondary text-center">
+              <span class="badge {{ monitor.average_loss_color }}" data-toggle="tooltip">{{ monitor.avg_loss }}%</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="d-flex justify-content-end">
+        <button title="Last Cleared: {{ monitor.last_clear }}" id="clearStat_button" class="btn btn-danger" data-toggle="tooltip" value="{{ monitor.id }}">Clear Statistics</button>
+      </div>
+    </div>
+
+    <br />
+
     <div class="h-100 d-flex align-items-center justify-content-center">
       <img src="{{ graph.smoke }}" alt="agent:{{ agent.id }} - smoke graph" />
     </div>
@@ -73,28 +112,7 @@
     <div class="col" style="width: 695px;">
       <form action="#" method="GET">
         <div class="input-group">
-          <span class="input-group-text">{{ timezone }}</span>
-          <!--
-          <select class="form-select" name="timezone" id="timezone">
-            <option value="UTC">UTC</option>
-            <option value="US/Pacific">US/Pacific</option>
-            <option value="US/Eastern">US/Eastern</option>
-            <option value="US/Central">US/Central</option>
-            <option value="US/Mountain">US/Mountain</option>
-            <option value="US/Alaska">US/Alaska</option>
-            <option value="US/Hawaii">US/Hawaii</option>
-            <option value="US/Arizona">US/Arizona</option>
-            <option value="US/Samoa">US/Samoa</option>
-            <option value="US/Pacific-New">US/Pacific-New</option>
-            <option value="US/Eastern-New">US/Eastern-New</option>
-            <option value="US/Central-New">US/Central-New</option>
-            <option value="US/Mountain-New">US/Mountain-New</option>
-            <option value="US/Alaska-New">US/Alaska-New</option>
-            <option value="US/Hawaii-New">US/Hawaii-New</option>
-            <option value="US/Arizona-New">US/Arizona-New</option>
-            <option value="US/Samoa-New">US/Samoa-New</option>
-          </select>
-          -->
+          <span title="Server Timezone" class="input-group-text" data-toggle="tooltip">{{ timezone }}</span>
           <input type="datetime-local" class="form-control" name="start" value="{{ start }}" />
           <input type="datetime-local" class="form-control" name="end" value="{{ end }}" />
           <input class="btn btn-primary" type="submit" value="Submit" />

@@ -4,6 +4,7 @@ Kinetic - CRUD operations for monitors db table
 
 from os import remove
 from hashlib import md5
+from datetime import datetime
 from typing import Annotated, Optional
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
@@ -446,6 +447,45 @@ async def update_monitor_id(db: DBDependency, monitor: MonitorUpdateModel, monit
         "description": monitor.description,
         "is_active": monitor.is_active
     }
+
+@router.patch("/{monitor_id}", status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        204: { "content": {
+            "application/json": {
+                "example": {"detail": "No Content"}
+            }
+        }},
+        404: { "content": {
+            "application/json": {
+                "example": {"detail": "Not Found"}
+            }
+        }}
+    }
+)
+async def clear_monitor_stats(db: DBDependency, monitor_id: str = Path(..., min_length=36, max_length=36, pattern="^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}$")):
+    """ Clear monitor stats by ID """
+
+    # Get monitor from database
+    db_monitor = db.query(Monitors).filter(Monitors.id == monitor_id).first()
+
+    # Return 404 if monitor not found
+    if not db_monitor:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    # Zero out: sample, avg_loss, avg_median, avg_min, avg_max, avg_stddev, total_down
+    for field in db_monitor.__table__.columns:
+        if field.name in ("sample", "avg_loss", "avg_median", "avg_min", "avg_max", "avg_stddev", "total_down"):
+            setattr(db_monitor, field.name, 0)
+
+    # Update last_clear to current time
+    db_monitor.last_clear = datetime.now()
+
+    # Commit changes
+    db.commit()
+    db.refresh(db_monitor)
+
+    # Return 204 if cleared
+    return {"detail": "No Content"}
 
 @router.delete("/{monitor_id}", status_code=status.HTTP_204_NO_CONTENT,
     responses={

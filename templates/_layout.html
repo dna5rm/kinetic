@@ -21,9 +21,35 @@
     <script src="{{ url_for('static', path='/js/popper.js') }}"></script>
     <script src="{{ url_for('static', path='/js/bootstrap.js') }}"></script>
     <script>
+        // enable tooltips
         $(document).ready(function () {
             $('[data-toggle="tooltip"]').tooltip({
                 placement: 'bottom'
+            });
+        });
+    </script>
+    <script>
+        // display a popup when the clear statistics button is clicked
+        $(document).ready(function () {
+            $('#clearStat_button').click(function () {
+                // validate the val is a uuid
+                var uuid = $(this).val();
+                if (!uuid.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)) {
+                    alert("Invalid monitor id");
+                    return;
+                } else {
+                    var url = "/monitors/" + uuid;
+                    if (confirm("Clear statistics for monitor " + uuid + "?")) {
+                        // send a patch request to the server
+                        $.ajax({
+                            url: url,
+                            type: 'PATCH',
+                            success: function (result) {
+                                location.reload();
+                            }
+                        });
+                    }
+                }
             });
         });
     </script>

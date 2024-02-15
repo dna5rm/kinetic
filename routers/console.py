@@ -66,7 +66,8 @@ class MonitorStats:
     host_id: str
     host_address: str
     host_description: str
-    last_change: str
+    last_clear: str
+    last_down: str
     last_update: str
 
     # Current
@@ -340,7 +341,7 @@ def StatReport(db: DBDependency, monitors):
 
             # get last update times from monitor and convert to naturaldelta
             # remove the word "ago" from the string
-            last_change = naturaltime(monitor.last_change).replace(" ago", "")
+            last_down = naturaltime(monitor.last_down).replace(" ago", "")
             last_update = naturaltime(monitor.last_update)
 
             # get current stats from monitor
@@ -444,7 +445,8 @@ def StatReport(db: DBDependency, monitors):
                 host_id=monitor.host_id,
                 host_address=host.address,
                 host_description=host.description,
-                last_change=last_change,
+                last_clear=monitor.last_clear,
+                last_down=last_down,
                 current_median=current_median,
                 current_loss=current_loss,
                 average_median=average_median,
@@ -625,6 +627,9 @@ async def console_monitor(request: Request, db: DBDependency, monitor_id: str = 
                                             datetime.strptime(rrd_end, '%Y-%m-%dT%H:%M').strftime("%s"))
                     }
                 }
+
+                # Append the stats to the context for the monitor
+                context.update(StatReport(db, [monitor_id]))
 
                 return templates.TemplateResponse("monitor.html", context=context)
 

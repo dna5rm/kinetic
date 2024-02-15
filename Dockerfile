@@ -1,7 +1,7 @@
 FROM python:alpine3.19
 RUN apk update \
   && apk add build-base \
-    font-freefont rrdtool rrdtool-dev
+  font-freefont rrdtool rrdtool-dev
 WORKDIR /srv
 COPY . .
 RUN pip install --upgrade pip

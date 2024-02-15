@@ -7,4 +7,4 @@
 **/*.rrd
 **/*.tar
 **/.git
-./Dockerfile
+./[d,D]ocker*
