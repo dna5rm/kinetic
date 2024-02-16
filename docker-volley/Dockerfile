@@ -1,5 +1,5 @@
 FROM python:alpine3.19
-RUN apk update
+RUN apk -U upgrade
 WORKDIR /srv
 COPY ../volley.py .
 RUN pip install --upgrade pip

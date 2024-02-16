@@ -21,9 +21,14 @@
         </div>
         {% endif %}
         <div class="col">
-            <h3>Server Statistics</h3>
-            <p>Uptime is {{ stats.server_run_time }}.</p>
+            <h3>Server Runtime</h3>
+                   <ul>
+                        <li>Server time: {% if stats.server_timezone != "UTC" %}{{ stats.server_localtime }} ({{ stats.server_timezone }})</li>
+                        <li>UTC time: {% endif %}{{ stats.server_utc_time }}</li>
+                        <li>Uptime is {{ stats.server_run_time }}</li>
+                    </ul>
 
+            <h3>Monitoring Statistics</h3>
             <div class="col">
                 <table class="table table-striped">
                     <thead class="table-dark">

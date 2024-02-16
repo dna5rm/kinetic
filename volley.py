@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field, field_validator, IPvAnyAddress, Validatio
 from scapy.all import sr1, IP, IPv6, ICMP, ICMPv6EchoRequest, TCP
 from json import dumps as json_dumps, loads as json_loads
 from os import environ
+from sys import argv
 import concurrent.futures
 import requests
 import time
@@ -184,11 +185,11 @@ class volley(BaseModel):
             # note the time after the packet has been sent
             end_time = time.time()
 
-            # DEBUG: print the response
-            #print(response.summary())
+            # DEBUG: print the response type
+            #print(response)
 
-            # calculate the difference in time and convert to ms
-            if response:
+            # calculate the difference in time and convert to ms if response and echo reply
+            if response and response.getlayer(ICMP).type == 0:
                 latency = round((end_time - start_time) * 100, 2)
             else:
                 latency = "U"
@@ -295,13 +296,30 @@ def submit_volley_result(agent_id: UUID, server: str, results: dict):
     return requests.status_codes
 
 if __name__ == '__main__':
+    '''
+    Kinetic Agent Main dunder method to execute the script
+    '''
 
     # Get the agent id and server from the environment
     try:
         agent_id = environ['KINETIC_AGENT_ID']
         server = environ['KINETIC_SERVER']
     except KeyError as e:
-        print("KINETIC_AGENT_ID and KINETIC_SERVER must be set!")
+        addresses = []
+        for arg in argv:
+            try:
+                IPvAnyAddress(arg)
+                addresses.append(arg)
+            except ValueError:
+                pass
+
+        # If no addresses are provided, print agent vars and quit
+        if not addresses:
+            print("KINETIC_AGENT_ID and KINETIC_SERVER must be set!")
+        else:
+            # If addresses are provided, run the ICMP function and print the results.
+            for address in addresses:
+                print(volley.ICMP(address, 20))
         quit()
 
     START_TIME = time.time()

@@ -502,6 +502,9 @@ async def console_home(request: Request, db: DBDependency):
             "total_agents": db.query(Agents).count(),
             "total_hosts": db.query(Hosts).count(),
             "total_monitors": db.query(Monitors).count(),
+            "server_localtime": datetime.now().strftime("%Y-%m-%d %H:%M:%S %Z"),
+            "server_utc_time": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S %Z"),
+            "server_timezone": request.app.server_timezone,
             "server_start_time": request.app.server_start_time,
             "server_run_time": naturaldelta(datetime.now() - request.app.server_start_time)
         }
