@@ -60,7 +60,7 @@ class JobSubmissionModel(BaseModel):
         # each item must be an int or "U"
         for item in v:
             if not isinstance(item, float) and item != "U":
-                raise ValueError("results must be a list of integers or 'U'")
+                raise ValueError("results must be a list of floats or 'U'")
         return v
 
 # RRDHandler model for creating/updating RRD files

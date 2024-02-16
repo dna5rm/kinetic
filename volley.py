@@ -188,8 +188,20 @@ class volley(BaseModel):
             # DEBUG: print the response type
             #print(response)
 
+            # check if the response is an echo reply
+            if ":" in host:
+                try:
+                    response_type = response.haslayer(ICMPv6EchoRequest)
+                except AttributeError:
+                    response_type = None
+            else:
+                try:
+                    response_type = response.getlayer(ICMP).type
+                except AttributeError:
+                    response_type = None
+
             # calculate the difference in time and convert to ms if response and echo reply
-            if response and response.getlayer(ICMP).type == 0:
+            if response and response_type == 0:
                 latency = round((end_time - start_time) * 100, 2)
             else:
                 latency = "U"

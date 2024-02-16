@@ -163,6 +163,9 @@ class RRDGraph:
                 else:
                     rrd_color = '#FF0000'
 
+                # If {rrd_file[0]} contains ':' replace with '\:'
+                rrd_file[0] = sub(r':', r'\\:', rrd_file[0])
+
                 rrd_graph_str.append(f"DEF:loss{rrd_idx}={rrd_file[1]}:loss:LAST")
                 rrd_graph_str.append(f"CDEF:ploss{rrd_idx}=loss{rrd_idx},{polls},/,100,*")
                 rrd_graph_str.append(f"LINE2:ploss{rrd_idx}{rrd_color}:{rrd_file[0]}\t")
@@ -252,6 +255,9 @@ class RRDGraph:
                     rrd_color = '#%02X%02X%02X' % (rrd_color(),rrd_color(),rrd_color())
                 else:
                     rrd_color = '#FF0000'
+
+                # If {rrd_file[0]} contains ':' replace with '\:'
+                rrd_file[0] = sub(r':', r'\\:', rrd_file[0])
 
                 rrd_graph_str.append(f"DEF:median{rrd_idx}={rrd_file[1]}:median:AVERAGE")
                 rrd_graph_str.append(f"DEF:loss{rrd_idx}={rrd_file[1]}:loss:AVERAGE")
