@@ -1,5 +1,5 @@
 """
-This script will send a volley of packets to a host and return the average latency and loss
+This script will send a volley of packets to a target and return the average latency and loss
 
 If Running from CLI:
 $ watch KINETIC_AGENT_ID=<AGENT UUID> KINETIC_SERVER=<SERVER URL> timeout 90 python volley.py
@@ -11,6 +11,7 @@ from scapy.all import sr1, IP, IPv6, ICMP, ICMPv6EchoRequest, TCP
 from json import dumps as json_dumps, loads as json_loads
 from os import environ
 from sys import argv
+from socket import gethostbyname, gaierror
 import concurrent.futures
 import requests
 import time
@@ -157,22 +158,22 @@ class volley(BaseModel):
 
         return json_dumps(result, indent=4)
 
-    def ICMP(host, volley=20, tos=0x00):
+    def ICMP(target, volley=20, tos=0x00):
         """
-        Send a volley of ICMP packets to a host and return the average latency and loss
+        Send a volley of ICMP packets to a target and return the average latency and loss
         
         Parameters:
-        host (str): Hostname or IP address of the destination
+        target (str): Hostname or IP address of the destination
         volley (int): Number of packets to send
         tos (int): TOS value to set on the packet
         """
 
         latencies = []
         
-        if ":" in host:
-            packet = IPv6(dst=host, hlim=64, tc=tos)/ICMPv6EchoRequest()
+        if ":" in target:
+            packet = IPv6(dst=target, hlim=64, tc=tos)/ICMPv6EchoRequest()
         else:
-            packet = IP(dst=host, tos=tos)/ICMP(type=8, code=0)
+            packet = IP(dst=target, tos=tos)/ICMP(type=8, code=0)
 
         # Send the volley of packets
         for i in range(volley):
@@ -189,7 +190,7 @@ class volley(BaseModel):
             #print(response)
 
             # check if the response is an echo reply
-            if ":" in host:
+            if ":" in target:
                 try:
                     response_type = response.haslayer(ICMPv6EchoRequest)
                 except AttributeError:
@@ -211,19 +212,19 @@ class volley(BaseModel):
 
         return latencies
 
-    def TCP(host, volley=5, port=443, tos=0x00):
+    def TCP(target, volley=5, port=443, tos=0x00):
         """
-        Send a volley of TCP packets to a host and return the average latency and loss
+        Send a volley of TCP packets to a target and return the average latency and loss
         
         Parameters:
-        host (str): Hostname or IP address of the destination
+        target (str): Hostname or IP address of the destination
         volley (int): Number of packets to send
         port (int): Port to send the packets to
         tos (int): TOS value to set on the packet
         """
 
         latencies = []
-        packet = IP(dst=host, tos=tos)/TCP(sport=port, dport=port, flags="S")
+        packet = IP(dst=target, tos=tos)/TCP(sport=port, dport=port, flags="S")
 
         # Send the volley of connections
         for i in range(volley):
@@ -320,11 +321,12 @@ if __name__ == '__main__':
         addresses = []
         for arg in argv:
             try:
-                IPvAnyAddress(arg)
-                addresses.append(arg)
-            except ValueError:
-                pass
-
+                target = gethostbyname(arg)  # Attempt to resolve hostname to IP
+                if IPvAnyAddress(target):    # Validate the IP address
+                    print(arg, target)
+                    addresses.append(target) # Add the IP address to the list
+            except gaierror:
+                pass                         # If the hostname is not resolvable, skip it
         # If no addresses are provided, print agent vars and quit
         if not addresses:
             print("KINETIC_AGENT_ID and KINETIC_SERVER must be set!")
