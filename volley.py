@@ -323,7 +323,6 @@ if __name__ == '__main__':
             try:
                 target = gethostbyname(arg)  # Attempt to resolve hostname to IP
                 if IPvAnyAddress(target):    # Validate the IP address
-                    print(arg, target)
                     addresses.append(target) # Add the IP address to the list
             except gaierror:
                 pass                         # If the hostname is not resolvable, skip it
