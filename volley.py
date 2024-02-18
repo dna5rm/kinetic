@@ -321,7 +321,10 @@ if __name__ == '__main__':
         addresses = []
         for arg in argv:
             try:
-                target = gethostbyname(arg)  # Attempt to resolve hostname to IP
+                if ':' not in arg:
+                    target = gethostbyname(arg)  # Attempt to resolve hostname to IP
+                else:
+                    target = arg                        
                 if IPvAnyAddress(target):    # Validate the IP address
                     addresses.append(target) # Add the IP address to the list
             except gaierror:
