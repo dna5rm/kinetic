@@ -12,8 +12,8 @@
             <h3>Agents</h3>
             <ul class="list-group">
                 {% for agent in agents|sort(attribute='name') %}
-                <li class="list-group-item{% if not responding[loop.index0] %} list-group-item-danger{% endif %}">
-                    <a href="/console/agent/{{ agent.id }}"{% if not responding[loop.index0] %} title="Last seen {{ last_seen[loop.index0] }}" data-toggle="tooltip"{% endif %}>
+                <li class="list-group-item{% if agent.last_responded %} list-group-item-danger{% endif %}">
+                    <a href="/console/agent/{{ agent.id }}"{% if agent.last_responded %} title="Last seen {{ agent.last_responded }}" data-toggle="tooltip"{% endif %}>
                         {{ agent.name }}
                     </a>
                 </li>
@@ -23,8 +23,8 @@
         <div class="col">
             <h3>Server Runtime</h3>
                    <ul>
-                        <li>Server time: {% if stats.server_timezone != "UTC" %}{{ stats.server_localtime }} ({{ stats.server_timezone }})</li>
-                        <li>UTC time: {% endif %}{{ stats.server_utc_time }}</li>
+                        <li>Server time: {{ stats.server_localtime }} ({{ stats.server_timezone }})</li>
+                        {% if stats.server_utc_time %}<li>UTC time: {{ stats.server_utc_time }}</li>{% endif %}
                         <li>Uptime is {{ stats.server_run_time }}</li>
                     </ul>
 
@@ -47,10 +47,10 @@
                             <td class="text-center">{{ stats.total_agents }}</td>
                         </tr>
                         <tr>
-                            <td>Hosts</td>
-                            <td class="text-center">{{ stats.active_hosts }}</td>
-                            <td class="text-center">{{ stats.disabled_hosts }}</td>
-                            <td class="text-center">{{ stats.total_hosts }}</td>
+                            <td>Targets</td>
+                            <td class="text-center">{{ stats.active_targets }}</td>
+                            <td class="text-center">{{ stats.disabled_targets }}</td>
+                            <td class="text-center">{{ stats.total_targets }}</td>
                         </tr>
                         <tr>
                             <td>Monitors</td>

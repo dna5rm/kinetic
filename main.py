@@ -5,7 +5,7 @@ from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from database import engine
 import models
-from routers import agents, hosts, monitors, console, volley, env
+from routers import agents, targets, monitors, console, volley, env
 from starlette.staticfiles import StaticFiles
 from datetime import datetime
 
@@ -34,7 +34,7 @@ app.include_router(env.router)
 
 # Basic CRUD operations
 app.include_router(agents.router)
-app.include_router(hosts.router)
+app.include_router(targets.router)
 app.include_router(monitors.router)
 
 # Agent job operations

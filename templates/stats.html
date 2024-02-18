@@ -7,9 +7,9 @@
             {% if agent and request.scope.route.name == 'console_agent' %}
             <h1 class="display-4">Agent: <i>{{ agent.name }} ({{ agent.address }})</i></h1>
             <p>Description: {{ agent.description }}<br />Last Seen: {{ agent.last_seen }}</p>
-            {% elif host and request.scope.route.name == 'console_host' %}
-            <h1 class="display-4">Host: <i>{{ host.address }}</i></h1>
-            <p>Description: <i>{{ host.description }}</i></p>
+            {% elif target and request.scope.route.name == 'console_target' %}
+            <h1 class="display-4">Target: <i>{{ target.address }}</i></h1>
+            <p>Description: <i>{{ target.description }}</i></p>
             {% elif request.scope.route.name == 'console_down' %}
             <h1 class="display-4">Report: <i>Down</i></h1>
             {% elif request.scope.route.name == 'console_latency' %}
@@ -28,7 +28,7 @@
         <table class="table table-striped">
             <thead>
                 <tr>
-                    {% if request.scope.route.name != 'console_agent' and request.scope.route.name != 'console_host' -%}
+                    {% if request.scope.route.name != 'console_agent' and request.scope.route.name != 'console_target' -%}
                     <th colspan="4" class="text-center" scope="col"></th>
                     {%- else -%}
                     <th colspan="3" class="text-center" scope="col"></th>
@@ -41,7 +41,7 @@
                 </tr>
                 <tr>
                     {% if request.scope.route.name != 'console_agent' -%}<th scope="col">Agent</th>{%- endif -%}
-                    {% if request.scope.route.name != 'console_host' -%}<th scope="col">Host</th>{%- endif -%}
+                    {% if request.scope.route.name != 'console_target' -%}<th scope="col">Target</th>{%- endif -%}
                     <th scope="col">Monitor</th>
                     <th class="text-center" scope="col">Protocol</th>
                     <th class="table-primary text-center" scope="col">Median</th>
@@ -63,8 +63,8 @@
                         <a href="/console/agent/{{ stat.agent_id }}" title="{{ stat.agent_description }}" data-toggle="tooltip">{{ stat.agent_name }}</a>
                     </td>
                     {% endif -%}
-                    {% if request.scope.route.name != 'console_host' -%}<td>
-                        <a href="/console/host/{{ stat.host_id }}" title="{{ stat.host_description }}" data-toggle="tooltip">{{ stat.host_address }}</a>
+                    {% if request.scope.route.name != 'console_target' -%}<td>
+                        <a href="/console/target/{{ stat.target_id }}" title="{{ stat.target_description }}" data-toggle="tooltip">{{ stat.target_address }}</a>
                     </td>
                     {% endif -%}
                     <td>

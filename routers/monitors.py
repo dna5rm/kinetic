@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, HTTPException, Path
 from fastapi.encoders import jsonable_encoder
 from starlette import status
-from models import Agents, Hosts, Monitors
+from models import Agents, Targets, Monitors
 from database import SessionLocal
 from uuid import uuid4 as UUID
 
@@ -33,8 +33,8 @@ DBDependency = Annotated[Session, Depends(get_db)]
 class MonitorModel(BaseModel):
     """ Monitor Model """
     agent_id: str = Field(..., pattern="^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$", description="Agent by id")
-    host_id: str = Field(..., pattern="^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$", description="Host by id")
-    description: Optional[str] = Field(max_length=255, example="Monitoring host",
+    target_id: str = Field(..., pattern="^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$", description="Target by id")
+    description: Optional[str] = Field(max_length=255, example="Monitoring target",
         description="Monitor description")
     protocol: Optional[str] = Field(example="icmp",
         description="Protocol to use [tcp or icmp]")
@@ -93,7 +93,7 @@ class MonitorModel(BaseModel):
 
 class MonitorUpdateModel(BaseModel):
     """ Monitor Update Model """
-    description: Optional[str] = Field(max_length=255, example="Monitoring host",
+    description: Optional[str] = Field(max_length=255, example="Monitoring target",
         description="Monitor description")
     is_active: Optional[bool] = Field(example=True,
         description="Whether the monitor is active or not")
@@ -105,8 +105,8 @@ class MonitorUpdateModel(BaseModel):
                 "example": [{
                         "id": "00000000-0000-0000-0000-000000000000",
                         "agent_id": "00000000-0000-0000-0000-000000000000",
-                        "host_id": "00000000-0000-0000-0000-000000000000",
-                        "description": "Monitoring host",
+                        "target_id": "00000000-0000-0000-0000-000000000000",
+                        "description": "Monitoring target",
                         "protocol": "icmp",
                         "port": 0,
                         "dscp": 0,
@@ -133,7 +133,7 @@ async def read_monitor_all(db: DBDependency):
         monitors.append({
             "id": monitor.id,
             "agent_id": monitor.agent_id,
-            "host_id": monitor.host_id,
+            "target_id": monitor.target_id,
             "description": monitor.description,
             "protocol": monitor.protocol,
             "port": monitor.port,
@@ -151,8 +151,8 @@ async def read_monitor_all(db: DBDependency):
                 "example": {
                     "id": "00000000-0000-0000-0000-000000000000",
                     "agent_id": "00000000-0000-0000-0000-000000000000",
-                    "host_id": "00000000-0000-0000-0000-000000000000",
-                    "description": "Monitoring host",
+                    "target_id": "00000000-0000-0000-0000-000000000000",
+                    "description": "Monitoring target",
                     "protocol": "icmp",
                     "port": 0,
                     "dscp": 0,
@@ -183,7 +183,7 @@ async def read_monitor_id(db: DBDependency, monitor_id: str = Path(..., min_leng
     return {
         "id": monitor.id,
         "agent_id": monitor.agent_id,
-        "host_id": monitor.host_id,
+        "target_id": monitor.target_id,
         "description": monitor.description,
         "protocol": monitor.protocol,
         "port": monitor.port,
@@ -200,8 +200,8 @@ async def read_monitor_id(db: DBDependency, monitor_id: str = Path(..., min_leng
                 "example": {
                     "id": "00000000-0000-0000-0000-000000000000",
                     "agent_id": "00000000-0000-0000-0000-000000000000",
-                    "host_id": "00000000-0000-0000-0000-000000000000",
-                    "description": "Monitoring host",
+                    "target_id": "00000000-0000-0000-0000-000000000000",
+                    "description": "Monitoring target",
                     "protocol": "icmp",
                     "port": 0,
                     "dscp": 0,
@@ -239,7 +239,7 @@ async def read_monitor_by_agent_id(db: DBDependency, agent_id: str = Path(..., m
         monitors.append({
             "id": monitor.id,
             "agent_id": monitor.agent_id,
-            "host_id": monitor.host_id,
+            "target_id": monitor.target_id,
             "description": monitor.description,
             "protocol": monitor.protocol,
             "port": monitor.port,
@@ -250,15 +250,15 @@ async def read_monitor_by_agent_id(db: DBDependency, agent_id: str = Path(..., m
         })
     return monitors
 
-@router.get("/host/{host_id}", status_code=status.HTTP_200_OK,
+@router.get("/target/{target_id}", status_code=status.HTTP_200_OK,
     responses={
         200: { "content": {
             "application/json": {
                 "example": {
                     "id": "00000000-0000-0000-0000-000000000000",
                     "agent_id": "00000000-0000-0000-0000-000000000000",
-                    "host_id": "00000000-0000-0000-0000-000000000000",
-                    "description": "Monitoring host",
+                    "target_id": "00000000-0000-0000-0000-000000000000",
+                    "description": "Monitoring target",
                     "protocol": "icmp",
                     "port": 0,
                     "dscp": 0,
@@ -275,28 +275,28 @@ async def read_monitor_by_agent_id(db: DBDependency, agent_id: str = Path(..., m
         }},
     }
 )
-async def read_monitor_by_host_id(db: DBDependency, host_id: str = Path(..., min_length=36, max_length=36, pattern="^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}$")):
-    """ Get all monitors by host ID """
+async def read_monitor_by_target_id(db: DBDependency, target_id: str = Path(..., min_length=36, max_length=36, pattern="^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}$")):
+    """ Get all monitors by target ID """
 
-    # Get host from database
-    host = db.query(Hosts).filter(Hosts.id == host_id).first()
+    # Get target from database
+    target = db.query(Targets).filter(Targets.id == target_id).first()
 
-    # Return 404 if host does not exist
-    if not host:
+    # Return 404 if target does not exist
+    if not target:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
     # Check the number of monitors in the database
-    count = db.query(Monitors).filter(Monitors.host_id == host_id).count()
+    count = db.query(Monitors).filter(Monitors.target_id == target_id).count()
     if count == 0:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
     # Loop through all monitors and return only certain fields
     monitors = []
-    for monitor in db.query(Monitors).filter(Monitors.host_id == host_id).all():
+    for monitor in db.query(Monitors).filter(Monitors.target_id == target_id).all():
         monitors.append({
             "id": monitor.id,
             "agent_id": monitor.agent_id,
-            "host_id": monitor.host_id,
+            "target_id": monitor.target_id,
             "description": monitor.description,
             "protocol": monitor.protocol,
             "port": monitor.port,
@@ -314,8 +314,8 @@ async def read_monitor_by_host_id(db: DBDependency, host_id: str = Path(..., min
                 "example": {
                     "id": "00000000-0000-0000-0000-000000000000",
                     "agent_id": "00000000-0000-0000-0000-000000000000",
-                    "host_id": "00000000-0000-0000-0000-000000000000",
-                    "description": "Monitoring host",
+                    "target_id": "00000000-0000-0000-0000-000000000000",
+                    "description": "Monitoring target",
                     "protocol": "icmp",
                     "port": 0,
                     "dscp": 0,
@@ -340,8 +340,8 @@ async def read_monitor_by_host_id(db: DBDependency, host_id: str = Path(..., min
                 "example": {
                     "id": "00000000-0000-0000-0000-000000000000",
                     "agent_id": "00000000-0000-0000-0000-000000000000",
-                    "host_id": "00000000-0000-0000-0000-000000000000",
-                    "description": "Monitoring host",
+                    "target_id": "00000000-0000-0000-0000-000000000000",
+                    "description": "Monitoring target",
                     "protocol": "icmp",
                     "port": 0,
                     "dscp": 0,
@@ -358,12 +358,12 @@ async def create_monitor_id(db: DBDependency, monitor: MonitorModel):
 
     # Get agent from database
     agent = db.query(Agents).filter(Agents.id == monitor.agent_id).first()
-    # Get host from database
-    host = db.query(Hosts).filter(Hosts.id == monitor.host_id).first()
+    # Get target from database
+    target = db.query(Targets).filter(Targets.id == monitor.target_id).first()
     # Check if monitor already exists from post data
     exists = db.query(Monitors).filter(
         Monitors.agent_id == monitor.agent_id,
-        Monitors.host_id == monitor.host_id,
+        Monitors.target_id == monitor.target_id,
         Monitors.protocol == monitor.protocol,
         Monitors.port == monitor.port,
         Monitors.dscp == monitor.dscp
@@ -371,14 +371,14 @@ async def create_monitor_id(db: DBDependency, monitor: MonitorModel):
 
     if not agent:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found (agent_id)")
-    if not host:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found (host_id)")
+    if not target:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found (target_id)")
     if exists:
         # Return 409 if monitor already exists
         raise HTTPException(
             status_code=409,
             detail=jsonable_encoder(exists, include=[
-                "id", "agent_id", "host_id", "description", "protocol", "port", "dscp"
+                "id", "agent_id", "target_id", "description", "protocol", "port", "dscp"
                 ])
             )
     if monitor.protocol == "tcp" and monitor.port == 0:
@@ -399,7 +399,7 @@ async def create_monitor_id(db: DBDependency, monitor: MonitorModel):
     return {
         "id": db_monitor.id,
         "agent_id": db_monitor.agent_id,
-        "host_id": db_monitor.host_id,
+        "target_id": db_monitor.target_id,
         "description": db_monitor.description,
         "protocol": db_monitor.protocol,
         "port": db_monitor.port,
@@ -414,7 +414,7 @@ async def create_monitor_id(db: DBDependency, monitor: MonitorModel):
         202: { "content": {
             "application/json": {
                 "example": {
-                    "description": "Monitoring host",
+                    "description": "Monitoring target",
                     "is_active": True
                 }
             }

@@ -1,5 +1,5 @@
 """
-Kinetic - CRUD operations for hosts db table
+Kinetic - CRUD operations for Targets db table
 """
 
 from typing import Annotated, Optional
@@ -8,13 +8,13 @@ from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, HTTPException, Path
 from fastapi.encoders import jsonable_encoder
 from starlette import status
-from models import Hosts
+from models import Targets
 from database import SessionLocal
 from uuid import uuid4 as UUID
 
 router = APIRouter(
-    prefix="/hosts",
-    tags=["hosts"]
+    prefix="/targets",
+    tags=["targets"]
 )
 
 def get_db():
@@ -27,8 +27,8 @@ def get_db():
 
 DBDependency = Annotated[Session, Depends(get_db)]
 
-class HostModel(BaseModel):
-    """ Host Request Model """
+class TargetModel(BaseModel):
+    """ Target Request Model """
     address: str = Field(..., example="192.0.2.42")
     description: Optional[str] = Field(max_length=255, example="This is host 42")
     is_active: Optional[bool] = Field(example=True)
@@ -57,15 +57,15 @@ class HostModel(BaseModel):
         }
     }
 )
-async def read_host_all(db: DBDependency):
-    """ Get all hosts """
-    # Check the number of hosts in the database
-    count = db.query(Hosts).count()
+async def read_target_all(db: DBDependency):
+    """ Get all targets """
+    # Check the number of targets in the database
+    count = db.query(Targets).count()
     if count == 0:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    return db.query(Hosts).all()
+    return db.query(Targets).all()
 
-@router.get("/{host_id}", status_code=status.HTTP_200_OK,
+@router.get("/{target_id}", status_code=status.HTTP_200_OK,
     responses={
         200: { "content": {
             "application/json": {
@@ -88,12 +88,12 @@ async def read_host_all(db: DBDependency):
         }
     }
 )
-async def read_host_id(db: DBDependency, host_id: str = Path(..., min_length=36, max_length=36, pattern="^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}$")):
-    """ Get host by id """
-    host = db.query(Hosts).filter(Hosts.id == host_id).first()
-    if not host:
+async def read_target_id(db: DBDependency, target_id: str = Path(..., min_length=36, max_length=36, pattern="^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}$")):
+    """ Get target by id """
+    target = db.query(Targets).filter(Targets.id == target_id).first()
+    if not target:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    return host
+    return target
 
 @router.post("/", status_code=status.HTTP_201_CREATED,
     responses={
@@ -110,29 +110,29 @@ async def read_host_id(db: DBDependency, host_id: str = Path(..., min_length=36,
         }
     }
 )
-async def create_host_id(db: DBDependency, host: HostModel):
-    """ Create a host """
+async def create_target_id(db: DBDependency, target: TargetModel):
+    """ Create a target """
 
-    # Check if host already exists from post data
-    exists = db.query(Hosts).filter(Hosts.address == host.address).first()
+    # Check if target already exists from post data
+    exists = db.query(Targets).filter(Targets.address == target.address).first()
 
-    # Return 409 if host already exists
+    # Return 409 if target already exists
     if exists:
         raise HTTPException(status_code=409, detail=jsonable_encoder(exists))
 
-    # If host does not exist, create and return 201 with database entry
-    db_host = Hosts(**host.dict())
+    # If target does not exist, create and return 201 with database entry
+    db_target = Targets(**target.dict())
 
-    # Generate UUID for host
-    db_host.id = str(UUID())
+    # Generate UUID for target
+    db_target.id = str(UUID())
 
-    # Add host to database
-    db.add(db_host)
+    # Add target to database
+    db.add(db_target)
     db.commit()
-    db.refresh(db_host)
-    return db_host
+    db.refresh(db_target)
+    return db_target
 
-@router.put("/{host_id}", status_code=status.HTTP_202_ACCEPTED,
+@router.put("/{target_id}", status_code=status.HTTP_202_ACCEPTED,
     responses={
         202: { "content": {
             "application/json": {
@@ -155,20 +155,20 @@ async def create_host_id(db: DBDependency, host: HostModel):
         }
     }
 )
-async def update_host_id(db: DBDependency, host: HostModel, host_id: str = Path(..., min_length=36, max_length=36, pattern="^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}$")):
-    """ Update a host """
-    db_host = db.query(Hosts).filter(Hosts.id == host_id).first()
-    if not db_host:
+async def update_target_id(db: DBDependency, target: TargetModel, target_id: str = Path(..., min_length=36, max_length=36, pattern="^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}$")):
+    """ Update a target """
+    db_target = db.query(Targets).filter(Targets.id == target_id).first()
+    if not db_target:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    if host:
-        db_host.address = host.address
-        db_host.description = host.description
-        db_host.is_active = host.is_active
+    if target:
+        db_target.address = target.address
+        db_target.description = target.description
+        db_target.is_active = target.is_active
         db.commit()
-        db.refresh(db_host)
-    return db_host
+        db.refresh(db_target)
+    return db_target
 
-@router.delete("/{host_id}", status_code=status.HTTP_204_NO_CONTENT,
+@router.delete("/{target_id}", status_code=status.HTTP_204_NO_CONTENT,
     responses={
         204: { "content": {
             "application/json": {
@@ -182,20 +182,20 @@ async def update_host_id(db: DBDependency, host: HostModel, host_id: str = Path(
         }}
     }
 )
-async def delete_host_id(db: DBDependency, host_id: str = Path(..., min_length=36, max_length=36, pattern="^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}$")):
-    """ Delete a host """
-    db_host = db.query(Hosts).filter(Hosts.id == host_id).first()
-    if not db_host:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Host not found")
-    db.delete(db_host)
+async def delete_target_id(db: DBDependency, target_id: str = Path(..., min_length=36, max_length=36, pattern="^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}$")):
+    """ Delete a target """
+    db_target = db.query(Targets).filter(Targets.id == target_id).first()
+    if not db_target:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Target not found")
+    db.delete(db_target)
     db.commit()
 
     # Return 204 if monitor deleted
     return {"detail": "No Content"}
 
-@router.get("/address/{address}", status_code=status.HTTP_200_OK, summary="Get a single host by address")
-async def read_host_address(db: DBDependency, address: str = Path(..., min_length=7, max_length=45)):
-    """ Get host by address """
+@router.get("/address/{address}", status_code=status.HTTP_200_OK, summary="Get a single target by address")
+async def read_target_address(db: DBDependency, address: str = Path(..., min_length=7, max_length=45)):
+    """ Get target by address """
 
     # raise an error if address fails IPvAnyAddress validation
     try:
@@ -203,8 +203,8 @@ async def read_host_address(db: DBDependency, address: str = Path(..., min_lengt
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid IP address") from exc
     
-    # Check if host already exists from post data
-    host = db.query(Hosts).filter(Hosts.address == address).first()
-    if not host:
+    # Check if target already exists from post data
+    target = db.query(Targets).filter(Targets.address == address).first()
+    if not target:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    return host
+    return target

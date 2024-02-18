@@ -13,7 +13,7 @@ from fastapi.responses import PlainTextResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.encoders import jsonable_encoder
 from starlette import status
-from models import Agents, Hosts, Monitors, Env
+from models import Agents, Targets, Monitors, Env
 from database import SessionLocal
 from rrdtool import update, create
 from json import loads as json_loads
@@ -182,24 +182,52 @@ class RRDHandler(BaseModel):
 
 @router.get("/down", include_in_schema=False)
 async def down(request: Request, db: DBDependency):
-    """ Test page - Generate Email Report """
-
-    # Get all monitors
-    monitors = db.query(Monitors).filter(Monitors.is_active == True).all()
-
-    # create a flat list of all monitors that both current_loss and prev_loss are both equal to pollcount
-    monitors_down = [item for sublist in db.query(Monitors.id).filter(Monitors.current_loss == Monitors.pollcount).\
-        filter(Monitors.prev_loss == Monitors.pollcount).all() for item in sublist]
+    """ Email Report """
 
     # Create context dictionary with app title
     context = {
         "request": request,
         "title": request.app.title,
         "description": request.app.description,
-        "monitors": monitors
+        "server_localtime": datetime.now().strftime("%Y-%m-%d %H:%M:%S %Z"),
+        "server_timezone": request.app.server_timezone,
+        "server_start_time": request.app.server_start_time,
+        "server_run_time": naturaldelta(datetime.now() - request.app.server_start_time)
     }
 
-    return templates.TemplateResponse("volley_down.html", context=context)
+    # create a flat list of all monitors that both current_loss and prev_loss are both equal to pollcount
+    down = [item for sublist in db.query(Monitors.id).filter(Monitors.is_active == True).\
+        filter(Monitors.current_loss == Monitors.pollcount).\
+        filter(Monitors.prev_loss == Monitors.pollcount).all() for item in sublist]
+
+    # get all down monitor details
+    context["monitors"] = []
+    for monitor in down:
+        monitor = db.query(Monitors).filter(Monitors.id == monitor).filter(Monitors.is_active == True).first()
+        agent = db.query(Agents).filter(Agents.id == monitor.agent_id).filter(Agents.is_active == True).first()
+        target = db.query(Targets).filter(Targets.id == monitor.target_id).filter(Targets.is_active == True).first()
+
+        # if down for 2hrs, blue, 5hrs, yellow, 24hrs, red
+        if datetime.now() - monitor.last_down > timedelta(hours=24):
+            color = "#DC4C64"
+        elif datetime.now() - monitor.last_down > timedelta(hours=5):
+            color = "#E4A11B"
+        else:
+            color = "#54B4D3"
+
+        context["monitors"].append({
+            "agent": agent.name,
+            "target": target.address,
+            "description": monitor.description,
+            "last_down": naturaltime(monitor.last_down),
+            "color": color
+        })
+
+    # sort monitors by agent then by last_down
+    context["monitors"] = sorted(context["monitors"], key=lambda k: (k['agent'], k['last_down']))
+
+    # return email template
+    return templates.TemplateResponse("volley_email.html", context=context)
 
 @router.get("/", status_code=status.HTTP_200_OK)
 async def volley_script():
@@ -212,7 +240,7 @@ async def volley_script():
         200: { "content": {
             "application/json": {
                 "example": [{
-                        "host_id": "00000000-0000-0000-0000-000000000000",
+                        "target_id": "00000000-0000-0000-0000-000000000000",
                         "address": "192.0.2.42",
                         "protocol": "icmp",
                         "port": 0,
@@ -264,15 +292,15 @@ async def read_agent_job(request: Request, db: DBDependency, agent_id: str = Pat
         monitors = db.query(Monitors).filter(Monitors.agent_id == agent_id).filter(Monitors.is_active == True).all()
         monitors = [monitor for monitor in monitors if monitor.last_update < datetime.now() - timedelta(seconds=monitor.pollinterval)]
         
-        # Lookup host names by host id
+        # Lookup target names by id
         for monitor in monitors:
-            host = db.query(Hosts).filter(Hosts.id == monitor.host_id).filter(Hosts.is_active == True).first()
+            target = db.query(Targets).filter(Targets.id == monitor.target_id).filter(Targets.is_active == True).first()
 
-            if host:
-                # Append host monitor to the response
+            if target:
+                # Append target monitor to the response
                 response.append({
                     "id": monitor.id,
-                    "address": host.address,
+                    "address": target.address,
                     "protocol": monitor.protocol,
                     "port": monitor.port,
                     "dscp": monitor.dscp,
@@ -382,10 +410,10 @@ async def update_agent_job(request: Request, db: DBDependency, agent_id: str = P
                 # Always update average loss
                 monitor.avg_loss = round(((monitor.avg_loss * (monitor.sample - 1)) + monitor.current_loss) / monitor.sample)
 
-                # Update last_down if host goes down from up
+                # Update last_down if target goes down from up
                 if monitor.current_loss == monitor.pollcount and monitor.prev_loss != monitor.pollcount:
                     monitor.last_down = datetime.now()
-                # Update last_down if host goes up from down
+                # Update last_down if target goes up from down
                 elif monitor.current_loss != monitor.pollcount and monitor.prev_loss == monitor.pollcount:
                     monitor.last_down = datetime.now()
 

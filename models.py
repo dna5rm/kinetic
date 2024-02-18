@@ -26,10 +26,10 @@ class Agents(Base):
     last_seen   = Column(DateTime, default=datetime.now())
     is_active   = Column(Boolean, default=True, nullable=False)
 
-# Define the Hosts model
-class Hosts(Base):
-    """ Hosts Table """
-    __tablename__ = "hosts"
+# Define the Targets model
+class Targets(Base):
+    """ Targets Table """
+    __tablename__ = "targets"
 
     id          = Column(String, primary_key=True, index=True, default=str(UUID()))
     address     = Column(String, unique=True, index=True, nullable=False)
@@ -60,7 +60,7 @@ class Monitors(Base):
     last_update    = Column(DateTime, default=datetime.now())
     total_down     = Column(Integer, default=0)
     agent_id       = Column(String, ForeignKey('agents.id'), nullable=False)
-    host_id        = Column(String, ForeignKey('hosts.id'), nullable=False)
+    target_id      = Column(String, ForeignKey('targets.id'), nullable=False)
     protocol       = Column(String, default="icmp")
     port           = Column(Integer, default=0)
     dscp           = Column(String, default="BE")
@@ -69,7 +69,7 @@ class Monitors(Base):
     is_active      = Column(Boolean, default=True, nullable=False)
 
     agent          = relationship("Agents", backref=backref("monitors", cascade="all, delete-orphan"))
-    host           = relationship("Hosts", backref=backref("monitors", cascade="all, delete-orphan"))
+    target         = relationship("Targets", backref=backref("monitors", cascade="all, delete-orphan"))
 
 """
 # Define the table to store the user accounts

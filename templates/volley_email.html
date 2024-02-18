@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <style>
+        body, table, td {
+            font-family: Arial, Helvetica, sans-serif !important;
+        }
+    
+        @media screen and (max-device-width:600px),
+        screen and (max-width:600px) {
+            td.inner_margin {
+                width: 5%;
+            }
+    
+            td.main_margin {
+                width: 12px;
+            }
+    
+            ul {
+                padding-left: 20px;
+            }
+        }
+        
+        th {
+            background-color: #000000;
+            color: white;
+        }
+    </style>
+</head>
+
+<body style="font-family:arial, helvetica, sans-serif; line-height: 1.6; letter-spacing:.01em; color:#424242;">
+    <!--[if mso]>
+    <center>
+    <table><tr><td width="840">
+    <![endif]-->
+    <table id="empty_margin" width=100% style="border-collapse:collapse; max-width:840px; margin:0 auto;">
+        <tr><td height="32px">&nbsp;</td></tr>
+        <tr>
+            <td class="main_margin" width=2%>&nbsp;</td>
+            <td id="content_area" style="border:5px solid #e673a8; font-weight:400;">
+                <table id="table_2" style="width:100%; border-collapse:collapse;">
+                    <colgroup>
+                        <col span="1" style="width: 2%;">
+                        <col span="1" style="width: 96%;">
+                        <col span="1" style="width: 2%;">
+                    </colgroup>
+                    <tr class="vert-spacer"><td colspan=3 height="24px">&nbsp;</td></tr>
+                    <tr>
+                        <td class="inner_margin" width="2%">&nbsp;</td>
+                        <td>
+                            <table id="masthead" width=100% style="height:23px; width:100%">
+                                <colgroup>
+                                    <col span="1" style="width: 160px;">
+                                    <col span="1" style="width: 80%;">
+                                </colgroup>
+                                <tr>
+                                    <td align="left" width=152px style="vertical-align:top;">
+                                        <img src="/static/kinetic.png" alt="kinetic" width="20" style="width:20px">
+                                        <span style="font-family:arial; font-weight:700; font-size:28px">Kinetic</span>
+                                    </td>
+                                    <td align="right" style="font-size: 12px; color: 2B3789">
+                                        {{ server_localtime }} ({{ server_timezone }})<br>
+                                        Server uptime is {{ server_run_time }}
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td class="inner_margin" width="2%">&nbsp;</td>
+                    </tr>
+                    <tr>
+                        <td class="inner_margin" width="2%">&nbsp;</td>
+                        <td>
+                            <table width=100%>
+                                <tr>
+                                    <td style="font-weight: 400; line-height: 1.6; letter-spacing: .4px;">
+                                        <span style="font-family:arial; font-weight:700; font-size:20px">The following monitors are down...</span>
+                                        <br><br>
+                                        <table width="100%" style="text-align: center; background-color:#F8F8F9;" cellpadding="5">
+                                            <thead>
+                                                <tr>
+                                                    <th>Agent</th>
+                                                    <th>Target</th>
+                                                    <th>Monitor</th>
+                                                    <th>Down</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for monitor in monitors %}
+                                                <tr{% if monitor.color %} style="background-color: {{ monitor.color }}; color: #000000;"{% endif %}>
+                                                    <td>{{ monitor.agent }}</td>
+                                                    <td>{{ monitor.target }}</td>
+                                                    <td>{{ monitor.description }}</td>
+                                                    <td>{{ monitor.last_down }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr class="vert-spacer"><td colspan=3 height="34px">&nbsp;</td></tr>
+                </table>
+            </td>
+            <td class="main_margin" width=2%>&nbsp;</td>
+        </tr>
+        <tr><td height="32px">&nbsp;</td></tr>
+    </table>
+    <!--[if mso]>
+    </td></tr></table>
+    </center>
+    <![endif]-->
+</body>
+
+</html>

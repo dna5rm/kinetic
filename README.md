@@ -16,8 +16,8 @@ To begin using Kinetic, first clone the Kinetic repository using `git clone http
 
 1. Run the Kinetic server.
 2. Configure the volley agents.
-3. Specify the hosts to be monitored.
-4. Set up the monitors.
+3. Specify the targets to be monitored.
+4. Set up the individual monitors.
 5. Deploy the volley agents.
 
 ### Local Run

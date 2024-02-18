@@ -9,7 +9,7 @@ from typing import Annotated
 from sqlalchemy.orm import Session
 from fastapi import Depends, APIRouter, Request, HTTPException, Path
 from fastapi.responses import HTMLResponse
-from models import Agents, Hosts, Monitors
+from models import Agents, Targets, Monitors
 from database import SessionLocal
 from datetime import datetime
 from humanize import naturaldelta, naturaltime
@@ -62,10 +62,10 @@ class MonitorStats:
     port: int
     dscp: str
 
-    # HOST
-    host_id: str
-    host_address: str
-    host_description: str
+    # TARGET
+    target_id: str
+    target_address: str
+    target_description: str
     last_clear: str
     last_down: str
     last_update: str
@@ -335,12 +335,12 @@ def StatReport(db: DBDependency, monitors):
         # lookup monitor in the monitor table
         monitor = db.query(Monitors).filter(Monitors.id == monitor).first()
 
-        # lookup agent_id and host_id
+        # lookup agent_id and target_id
         agent = db.query(Agents).filter(Agents.id == monitor.agent_id).first()
-        host = db.query(Hosts).filter(Hosts.id == monitor.host_id).first()
+        target = db.query(Targets).filter(Targets.id == monitor.target_id).first()
 
-        # if agent and host exists and both are active
-        if agent and agent.is_active and host and host.is_active:
+        # if agent and target exists and both are active
+        if agent and agent.is_active and target and target.is_active:
 
             # get pollcount from monitor
             pollcount = monitor.pollcount
@@ -448,9 +448,9 @@ def StatReport(db: DBDependency, monitors):
                 protocol=monitor.protocol,
                 port=monitor.port,
                 dscp=monitor.dscp,
-                host_id=monitor.host_id,
-                host_address=host.address,
-                host_description=host.description,
+                target_id=monitor.target_id,
+                target_address=target.address,
+                target_description=target.description,
                 last_clear=monitor.last_clear,
                 last_down=last_down,
                 current_median=current_median,
@@ -484,9 +484,12 @@ async def console_home(request: Request, db: DBDependency):
     # get a list of all agents where is_active is True
     agents = db.query(Agents).filter(Agents.is_active == True).all()
 
-    # create responding bolean list of all agents wether they have responded in the last 15 minutes
-    responding = [agent.last_seen > (datetime.now() - timedelta(minutes=15)) for agent in agents]
-    last_seen = [naturaltime(agent.last_seen) for agent in agents]
+    # if last_seen is greater than 15 minutes, append naturaltime to last_responded, else append None
+    last_responded = [naturaltime(agent.last_seen) if agent.last_seen < (datetime.now() - timedelta(minutes=15)) else None for agent in agents]
+
+    # append last_responded to agents
+    for idx, agent in enumerate(agents):
+        agent.last_responded = last_responded[idx]
 
     # Create context dictionary with app title
     context = {
@@ -494,27 +497,30 @@ async def console_home(request: Request, db: DBDependency):
         "title": request.app.title,
         "description": request.app.description,
         "agents": agents,
-        "responding": responding,
-        "last_seen": last_seen,
         "stats": {
             "active_agents": db.query(Agents).filter(Agents.is_active == True).count(),
-            "active_hosts": db.query(Hosts).filter(Hosts.is_active == True).count(),
+            "active_targets": db.query(Targets).filter(Targets.is_active == True).count(),
             "active_monitors": db.query(Monitors).filter(Monitors.is_active == True).\
                 filter(Monitors.agent_id == Agents.id).filter(Agents.is_active == True).\
-                filter(Monitors.host_id == Hosts.id).filter(Hosts.is_active == True).count(),
+                filter(Monitors.target_id == Targets.id).filter(Targets.is_active == True).count(),
             "disabled_agents": db.query(Agents).filter(Agents.is_active == False).count(),
-            "disabled_hosts": db.query(Hosts).filter(Hosts.is_active == False).count(),
+            "disabled_targets": db.query(Targets).filter(Targets.is_active == False).count(),
             "disabled_monitors": db.query(Monitors).filter(Monitors.is_active == False).count(),
             "total_agents": db.query(Agents).count(),
-            "total_hosts": db.query(Hosts).count(),
+            "total_targets": db.query(Targets).count(),
             "total_monitors": db.query(Monitors).count(),
             "server_localtime": datetime.now().strftime("%Y-%m-%d %H:%M:%S %Z"),
-            "server_utc_time": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S %Z"),
             "server_timezone": request.app.server_timezone,
             "server_start_time": request.app.server_start_time,
             "server_run_time": naturaldelta(datetime.now() - request.app.server_start_time)
         }
     }
+
+    # if server timezone is not UTC, append UTC time to the context under stats
+    if request.app.server_timezone != "UTC":
+        context["stats"].update({
+            "server_utc_time": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S %Z")
+        })
 
     # Include the app title in response.
     return templates.TemplateResponse("home.html", context=context)
@@ -526,6 +532,9 @@ async def console_agent(request: Request, db: DBDependency, agent_id: str = Path
 
     # get agent from database by agent_id
     agent = db.query(Agents).filter(Agents.id == agent_id).first()
+    
+    # change agent.last_seen to naturaltime
+    agent.last_seen = naturaltime(agent.last_seen)
 
     # if agent does not exist or is not active, raise HTTPException with 404 status code
     if not agent or not agent.is_active:
@@ -547,28 +556,28 @@ async def console_agent(request: Request, db: DBDependency, agent_id: str = Path
 
         return templates.TemplateResponse("stats.html", context=context)
 
-@router.get("/host/{host_id}", response_class=HTMLResponse)
-async def console_host(request: Request, db: DBDependency, host_id: str = Path(..., min_length=36, max_length=36, pattern="^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}$")):
-    """ Console - Monitors by Host """
+@router.get("/target/{target_id}", response_class=HTMLResponse)
+async def console_target(request: Request, db: DBDependency, target_id: str = Path(..., min_length=36, max_length=36, pattern="^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}$")):
+    """ Console - Monitors by target """
 
-    # get host from database by host_id
-    host = db.query(Hosts).filter(Hosts.id == host_id).first()
+    # get target from database by target_id
+    target = db.query(Targets).filter(Targets.id == target_id).first()
 
 
-    # if host does not exist or is not active, raise HTTPException with 404 status code
-    if not host or not host.is_active:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"host_id not found")
+    # if target does not exist or is not active, raise HTTPException with 404 status code
+    if not target or not target.is_active:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"target_id not found")
     else:
 
-        # create a flat list of all monitors where host_id is equal to host.id
-        monitor_match = [item for sublist in db.query(Monitors.id).filter(Monitors.host_id == host.id).all() for item in sublist]
+        # create a flat list of all monitors where target_id is equal to target.id
+        monitor_match = [item for sublist in db.query(Monitors.id).filter(Monitors.target_id == target.id).all() for item in sublist]
 
-        # Create context dictionary with host data
+        # Create context dictionary with target data
         context = {
             "request": request,
             "title": request.app.title,
             "description": request.app.description,
-            "host": host
+            "target": target
         }
 
         # append StatReport to context
@@ -585,14 +594,14 @@ async def console_monitor(request: Request, db: DBDependency, monitor_id: str = 
     # if monitor exists and is active
     if monitor and monitor.is_active:
 
-        # get host from database by host_id
-        host = db.query(Hosts).filter(Hosts.id == monitor.host_id).first()
+        # get target from database by target_id
+        target = db.query(Targets).filter(Targets.id == monitor.target_id).first()
 
         # get agent from database by agent_id
         agent = db.query(Agents).filter(Agents.id == monitor.agent_id).first()
 
-        # if host and agent exists and is active
-        if host and host.is_active and agent and agent.is_active:
+        # if target and agent exists and is active
+        if target and target.is_active and agent and agent.is_active:
 
             # get start and end times from query parameters
             rrd_start = request.query_params.get("start")
@@ -608,7 +617,7 @@ async def console_monitor(request: Request, db: DBDependency, monitor_id: str = 
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"start time is greater than end time")
             else:
                 rrds = []
-                rrds.append([host.address, agent.id, monitor.id])
+                rrds.append([target.address, agent.id, monitor.id])
 
                 # Create context dictionary with monitor data
                 context = {
@@ -616,7 +625,7 @@ async def console_monitor(request: Request, db: DBDependency, monitor_id: str = 
                     "title": request.app.title,
                     "description": request.app.description,
                     "agent": agent,
-                    "host": host,
+                    "target": target,
                     "monitor": monitor,
                     "start": rrd_start,
                     "end": rrd_end,
@@ -721,7 +730,7 @@ async def console_loss(request: Request, db: DBDependency):
 
 @router.get("/search", response_class=HTMLResponse)
 async def console_search(request: Request, db: DBDependency):
-    """ Console - Search monitors by host, agent or monitor description """
+    """ Console - Search monitors by target, agent or monitor description """
 
     # get search query from query parameters
     search = request.query_params.get("query")
@@ -737,17 +746,17 @@ async def console_search(request: Request, db: DBDependency):
             union_all(db.query(Agents.id).filter(Agents.description.like(f"%{search}%"))).\
             all()
 
-        host_match = db.query(Hosts.id).filter(Hosts.address.like(f"%{search}%")).\
-            union_all(db.query(Hosts.id).filter(Hosts.description.like(f"%{search}%"))).\
+        target_match = db.query(Targets.id).filter(Targets.address.like(f"%{search}%")).\
+            union_all(db.query(Targets.id).filter(Targets.description.like(f"%{search}%"))).\
             all()
 
         # flatten list of lists
         agent_match = list(set([item for sublist in agent_match for item in sublist]))
-        host_match = list(set([item for sublist in host_match for item in sublist]))
+        target_match = list(set([item for sublist in target_match for item in sublist]))
 
-        # search for monitor_id where host_id or agent_id exists in agent_match or host_match or were found in description
+        # search for monitor_id where target_id or agent_id exists in agent_match or target_match or were found in description
         monitor_match = db.query(Monitors.id).filter(Monitors.agent_id.in_(agent_match)).\
-            union_all(db.query(Monitors.id).filter(Monitors.host_id.in_(host_match))).\
+            union_all(db.query(Monitors.id).filter(Monitors.target_id.in_(target_match))).\
             union_all(db.query(Monitors.id).filter(Monitors.description.like(f"%{search}%"))).\
             all()
         
