@@ -18,6 +18,9 @@ from database import SessionLocal
 from rrdtool import update, create
 from json import loads as json_loads
 from humanize import naturaldelta, naturaltime
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+import smtplib
 
 router = APIRouter(
     prefix="/volley",
@@ -35,6 +38,12 @@ def get_db():
 
 DBDependency = Annotated[Session, Depends(get_db)]
 templates = Jinja2Templates(directory="templates")
+
+def update_or_create_env_var(env_var, key, value):
+    if env_var:
+        env_var.value = value
+    else:
+        return Env(key=key, value=value)
 
 # JobSubmissionModel for submitting job results
 class JobSubmissionModel(BaseModel):
@@ -180,9 +189,14 @@ class RRDHandler(BaseModel):
         # update RRD file
         update(rrd)
 
-@router.get("/down", include_in_schema=False)
+#@router.get("/down", include_in_schema=False)
 async def down(request: Request, db: DBDependency):
-    """ Email Report """
+    """ Notification of Down Monitors """
+
+    # Get the value of NOTIFY_HASH and NOTIFY_TIME from database
+    NOTIFY_HASH = db.query(Env).filter(Env.key == "NOTIFY_HASH").first()
+    NOTIFY_TIME = db.query(Env).filter(Env.key == "NOTIFY_TIME").first()
+    NOTIFY_TIME = NOTIFY_TIME if NOTIFY_TIME else datetime.now().timestamp()
 
     # Create context dictionary with app title
     context = {
@@ -200,6 +214,10 @@ async def down(request: Request, db: DBDependency):
         filter(Monitors.current_loss == Monitors.pollcount).\
         filter(Monitors.prev_loss == Monitors.pollcount).all() for item in sublist]
 
+    # create a hash of the down list
+    down_hash = str(hash(str(sorted(down))))
+    down_time = datetime.now().timestamp()
+
     # get all down monitor details
     context["monitors"] = []
     for monitor in down:
@@ -208,14 +226,16 @@ async def down(request: Request, db: DBDependency):
         target = db.query(Targets).filter(Targets.id == monitor.target_id).filter(Targets.is_active == True).first()
 
         # if down for 2hrs, blue, 5hrs, yellow, 24hrs, red
-        if datetime.now() - monitor.last_down > timedelta(hours=24):
+        if datetime.now() - monitor.last_down > timedelta(hours=12):
             color = "#DC4C64"
         elif datetime.now() - monitor.last_down > timedelta(hours=5):
             color = "#E4A11B"
-        else:
+        elif datetime.now() - monitor.last_down > timedelta(hours=2):
             color = "#54B4D3"
 
         context["monitors"].append({
+            "title": request.app.title,
+            "description": request.app.description,
             "agent": agent.name,
             "target": target.address,
             "description": monitor.description,
@@ -223,11 +243,41 @@ async def down(request: Request, db: DBDependency):
             "color": color
         })
 
-    # sort monitors by agent then by last_down
-    context["monitors"] = sorted(context["monitors"], key=lambda k: (k['agent'], k['last_down']))
+    # get SMTP_SERVER, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD and NOTIFY_EMAIL from database
+    SMTP_SERVER   = db.query(Env).filter(Env.key == "SMTP_SERVER").first().value
+    SMTP_PORT     = db.query(Env).filter(Env.key == "SMTP_PORT").first().value
+    SMTP_USERNAME = db.query(Env).filter(Env.key == "SMTP_USERNAME").first().value
+    SMTP_PASSWORD = db.query(Env).filter(Env.key == "SMTP_PASSWORD").first().value
+    NOTIFY_EMAIL  = db.query(Env).filter(Env.key == "NOTIFY_EMAIL").first().value
+
+    # if down_hash is not equal to NOTIFY_HASH and down_time is greater than NOTIFY_TIME + 1hr
+    if NOTIFY_HASH.value != down_hash and down_time > float(NOTIFY_TIME.value) + 3600:
+
+        # update NOTIFY_HASH and NOTIFY_TIME
+        NOTIFY_HASH = update_or_create_env_var(NOTIFY_HASH, "NOTIFY_HASH", down_hash)
+        NOTIFY_TIME = update_or_create_env_var(NOTIFY_TIME, "NOTIFY_TIME", down_time)
+        db.commit()
+
+        # if SMTP_SERVER, SMTP_PORT, SMTP_USERNAME and NOTIFY_EMAIL are set
+        if SMTP_SERVER and SMTP_PORT and SMTP_USERNAME and SMTP_PASSWORD and NOTIFY_EMAIL:
+
+            # Create a MIMEMultipart message object
+            message = MIMEMultipart()
+            message["From"] = SMTP_USERNAME
+            message["To"] = NOTIFY_EMAIL
+            message["Subject"] = request.app.title + " - Down Monitor Notification"
+            message.attach(MIMEText(templates.get_template("volley_notify.html").render(context), "html"))
+
+            # Create a SMTP session to connect to Gmail's mail server
+            with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+                server.starttls()                                                   # Enable secure connection
+                if SMTP_USERNAME and SMTP_PASSWORD:
+                    server.login(SMTP_USERNAME, SMTP_PASSWORD)                      # Login to the sender's email account
+                server.sendmail(SMTP_USERNAME, NOTIFY_EMAIL, message.as_string())   # Send the email
 
     # return email template
-    return templates.TemplateResponse("volley_email.html", context=context)
+    #return templates.TemplateResponse("volley_notify.html", context=context)
+    return None
 
 @router.get("/", status_code=status.HTTP_200_OK)
 async def volley_script():
@@ -309,6 +359,9 @@ async def read_agent_job(request: Request, db: DBDependency, agent_id: str = Pat
     else:
         # Agent not found
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    # run down notification
+    await down(request, db)
 
     # Return the response
     return response
