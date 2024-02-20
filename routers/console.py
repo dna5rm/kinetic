@@ -532,14 +532,14 @@ async def console_agent(request: Request, db: DBDependency, agent_id: str = Path
 
     # get agent from database by agent_id
     agent = db.query(Agents).filter(Agents.id == agent_id).first()
-    
-    # change agent.last_seen to naturaltime
-    agent.last_seen = naturaltime(agent.last_seen)
 
     # if agent does not exist or is not active, raise HTTPException with 404 status code
     if not agent or not agent.is_active:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"agent_id not found")
     else:
+        # change agent.last_seen to naturaltime
+        agent.last_seen = naturaltime(agent.last_seen)
+
         # create a flat list of all monitors where agent_id is equal to agent.id
         monitor_match = [item for sublist in db.query(Monitors.id).filter(Monitors.agent_id == agent.id).all() for item in sublist]
 

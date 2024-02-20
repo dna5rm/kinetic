@@ -189,14 +189,21 @@ class RRDHandler(BaseModel):
         # update RRD file
         update(rrd)
 
-#@router.get("/down", include_in_schema=False)
+@router.get("/down", include_in_schema=False)
 async def down(request: Request, db: DBDependency):
     """ Notification of Down Monitors """
 
-    # Get the value of NOTIFY_HASH and NOTIFY_TIME from database
-    NOTIFY_HASH = db.query(Env).filter(Env.key == "NOTIFY_HASH").first()
-    NOTIFY_TIME = db.query(Env).filter(Env.key == "NOTIFY_TIME").first()
-    NOTIFY_TIME = NOTIFY_TIME if NOTIFY_TIME else datetime.now().timestamp()
+    # Get the value of NOTIFY_HASH database
+    NOTIFY_HASH = None
+    notify_hash_env = db.query(Env).filter(Env.key == "NOTIFY_HASH").first()
+    if notify_hash_env:
+        NOTIFY_HASH = notify_hash_env.value
+
+    # Get the value of NOTIFY_HASH database
+    NOTIFY_TIME = datetime.now().timestamp()
+    notify_time_env = db.query(Env).filter(Env.key == "NOTIFY_TIME").first()
+    if notify_time_env:
+        NOTIFY_HASH = notify_time_env.value
 
     # Create context dictionary with app title
     context = {
@@ -244,14 +251,29 @@ async def down(request: Request, db: DBDependency):
         })
 
     # get SMTP_SERVER, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD and NOTIFY_EMAIL from database
-    SMTP_SERVER   = db.query(Env).filter(Env.key == "SMTP_SERVER").first().value
-    SMTP_PORT     = db.query(Env).filter(Env.key == "SMTP_PORT").first().value
-    SMTP_USERNAME = db.query(Env).filter(Env.key == "SMTP_USERNAME").first().value
-    SMTP_PASSWORD = db.query(Env).filter(Env.key == "SMTP_PASSWORD").first().value
-    NOTIFY_EMAIL  = db.query(Env).filter(Env.key == "NOTIFY_EMAIL").first().value
+    SMTP_SERVER = None
+    smtp_server_env = db.query(Env).filter(Env.key == "SMTP_SERVER").first()
+    if smtp_server_env:
+        SMTP_SERVER = smtp_server_env.value
+    SMTP_PORT = None
+    smtp_port_env = db.query(Env).filter(Env.key == "SMTP_PORT").first()
+    if smtp_port_env:
+        SMTP_PORT = smtp_port_env.value
+    SMTP_USERNAME = None
+    smtp_username_env = db.query(Env).filter(Env.key == "SMTP_USERNAME").first()
+    if smtp_username_env:
+        SMTP_USERNAME = smtp_username_env.value
+    SMTP_PASSWORD = None
+    smtp_password_env = db.query(Env).filter(Env.key == "SMTP_PASSWORD").first()
+    if smtp_password_env:
+        SMTP_PASSWORD = smtp_password_env.value
+    NOTIFY_EMAIL = None
+    notify_email_env = db.query(Env).filter(Env.key == "NOTIFY_EMAIL").first()
+    if notify_email_env:
+        NOTIFY_EMAIL = notify_email_env.value
 
     # if down_hash is not equal to NOTIFY_HASH and down_time is greater than NOTIFY_TIME + 1hr
-    if NOTIFY_HASH.value != down_hash and down_time > float(NOTIFY_TIME.value) + 3600:
+    if NOTIFY_HASH != down_hash and down_time > float(NOTIFY_TIME) + 3600:
 
         # update NOTIFY_HASH and NOTIFY_TIME
         NOTIFY_HASH = update_or_create_env_var(NOTIFY_HASH, "NOTIFY_HASH", down_hash)
@@ -259,7 +281,7 @@ async def down(request: Request, db: DBDependency):
         db.commit()
 
         # if SMTP_SERVER, SMTP_PORT, SMTP_USERNAME and NOTIFY_EMAIL are set
-        if SMTP_SERVER and SMTP_PORT and SMTP_USERNAME and SMTP_PASSWORD and NOTIFY_EMAIL:
+        if SMTP_SERVER and SMTP_PORT and NOTIFY_EMAIL:
 
             # Create a MIMEMultipart message object
             message = MIMEMultipart()
@@ -276,8 +298,8 @@ async def down(request: Request, db: DBDependency):
                 server.sendmail(SMTP_USERNAME, NOTIFY_EMAIL, message.as_string())   # Send the email
 
     # return email template
-    #return templates.TemplateResponse("volley_notify.html", context=context)
-    return None
+    return templates.TemplateResponse("volley_notify.html", context=context)
+    #return None
 
 @router.get("/", status_code=status.HTTP_200_OK)
 async def volley_script():
