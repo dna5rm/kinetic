@@ -101,7 +101,7 @@ class RRDGraph:
     
         # for each agent/monitor
         for rrd_temp in rrds:
-            rrd_file = [rrd_temp[0], "rra_data/" + md5((str(rrd_temp[1]) + "-" + str(rrd_temp[2])).encode()).hexdigest() + ".rrd"]
+            rrd_file = [rrd_temp[0], "./data/" + md5((str(rrd_temp[1]) + "-" + str(rrd_temp[2])).encode()).hexdigest() + ".rrd"]
             if FSPath(rrd_file[1]).is_file():
                 rrd_files.append(rrd_file)
 
@@ -196,11 +196,11 @@ class RRDGraph:
     
         # for each agent/monitor
         for rrd_temp in rrds:
-            rrd_file = [rrd_temp[0], "rra_data/" + md5((str(rrd_temp[1]) + "-" + str(rrd_temp[2])).encode()).hexdigest() + ".rrd"]
+            rrd_file = [rrd_temp[0], "./data/" + md5((str(rrd_temp[1]) + "-" + str(rrd_temp[2])).encode()).hexdigest() + ".rrd"]
             if FSPath(rrd_file[1]).is_file():
                 rrd_files.append(rrd_file)
 
-        #rrd_files.append("rra_data/" + md5((str(rrds[0]) + "-" + str(rrds[1])).encode()).hexdigest() + ".rrd")
+        #rrd_files.append("./data/" + md5((str(rrds[0]) + "-" + str(rrds[1])).encode()).hexdigest() + ".rrd")
 
         if rrd_files:
             rrd_graph_str = []

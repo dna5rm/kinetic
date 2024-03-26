@@ -516,7 +516,7 @@ async def delete_monitor_id(db: DBDependency, monitor_id: str = Path(..., min_le
     db.commit()
 
     # delete the rrd file
-    rrd_file = "rra_data/" + md5((str(monitor.agent_id) + "-" + str(monitor_id)).encode()).hexdigest() + ".rrd"
+    rrd_file = "./data/" + md5((str(monitor.agent_id) + "-" + str(monitor_id)).encode()).hexdigest() + ".rrd"
     # check if file exists if so delete it
     try:
         remove(rrd_file)
