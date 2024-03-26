@@ -27,8 +27,50 @@ To begin using Kinetic, first clone the Kinetic repository using `git clone http
 
 ### Docker Run
 
-1. Build the Docker image: `docker build -t "kinetic:testing" .`.
-2. Run Kinetic: `docker run --name "kinetic" --publish 8080:80 -d "kinetic:testing"`.
+1. Create the following `docker-compose.yml`
+
+```yaml
+---
+services:
+  kinetic:
+    container_name: kinetic_server
+    build: https://github.com/dna5rm/kinetic.git
+    image: kinetic
+    ports:
+      - 8080:80
+    volumes:
+      - data:/srv/data
+    restart: unless-stopped
+volumes:
+  data:
+```
+
+2. `docker compose up -d`
+
+### Volley Agent (docker)
+
+1. Create the following `Dockerfile`
+
+```bash
+FROM python:alpine
+ARG volley="https://github.com/dna5rm/kinetic/raw/master/volley.py"
+
+ENV PYTHONUNBUFFERED 1
+
+WORKDIR /srv
+
+ADD ${volley} /srv/volley.py
+
+RUN apk -U upgrade
+RUN pip install --upgrade pip
+RUN pip install pydantic requests scapy
+
+CMD ["watch", "timeout", "90", "python", "/srv/volley.py"]
+```
+
+2. Building the image: `docker build -t "kinetic/volley" .`
+
+3. Running the image: `docker run --name "kinetic/volley" --env KINETIC_AGENT_ID="00000000-0000-0000-0000-000000000000" --env KINETIC_SERVER="https://kinetic.local" -d "kinetic/volley"`
 
 ## Known Issues
 
