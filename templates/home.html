@@ -23,8 +23,12 @@
         <div class="col">
             <h3>Server Runtime</h3>
                    <ul>
+                        {% if stats.server_timezone == "UTC" %}
+                        <li>Server time: {{ stats.server_localtime }}</li>
+                        {% else %}
                         <li>Server time: {{ stats.server_localtime }} ({{ stats.server_timezone }})</li>
-                        {% if stats.server_utc_time %}<li>UTC time: {{ stats.server_utc_time }}</li>{% endif %}
+                        <li>UTC time: {{ stats.server_utc_time }}</li>
+                        {% endif %}
                         <li>Uptime is {{ stats.server_run_time }}</li>
                     </ul>
 
