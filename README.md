@@ -20,12 +20,12 @@ To begin using Kinetic, first clone the Kinetic repository using `git clone http
 4. Set up the individual monitors.
 5. Deploy the volley agents.
 
-### Local Run
+### Running Kinetic Locally
 
 1. Install the required dependencies: `pip install -r requirements.txt`.
 2. Start the Kinetic server: `python main.py`.
 
-### Docker Run
+### Running Kinetic as a Docker Container
 
 1. Create the following `docker-compose.yml`
 
@@ -47,7 +47,7 @@ volumes:
 
 2. `docker compose up -d`
 
-### Volley Agent (docker)
+### Running the Agent as a Docker Container
 
 1. Create the following `Dockerfile`
 
@@ -70,12 +70,12 @@ CMD ["watch", "timeout", "90", "python", "/srv/volley.py"]
 
 2. Building the image: `docker build -t "kinetic/volley" .`
 
-3. Running the image: `docker run --name "kinetic/volley" --env KINETIC_AGENT_ID="00000000-0000-0000-0000-000000000000" --env KINETIC_SERVER="https://kinetic.local" -d "kinetic/volley"`
+3. Running the image: `docker run --name "kinetic_volley" --env KINETIC_AGENT_ID="00000000-0000-0000-0000-000000000000" --env KINETIC_SERVER="https://kinetic.local" -d "kinetic/volley"`
 
 ## Known Issues
 
-### Permission Issues with Scapy as a Non-root User
+### Permission Issues with Scapy locally as a Non-root User
 
-If you encounter permission issues when attempting to use scapy with `volley.py` during a Local Run, you can grant non-root users the capability to generate packets using scapy with the following command:
+If you encounter permission issues when running `volley.py` locally, you can grant your non-root users the capability to generate packets using scapy with the following command:
 
 `sudo setcap cap_net_raw+ep /usr/bin/python3.11`
